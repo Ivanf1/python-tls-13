@@ -70,3 +70,13 @@ def get_early_secret():
 def get_derived_secret():
     label = b'derived'
     return hkdf_expand_label(get_early_secret(), label, get_empty_hash_256(), 32)
+
+def get_handshake_secret(shared_secret):
+    """
+    Calculates the handshake secret performing HKDF-Extract.
+
+    :param shared_secret: calculated by performing key exchange from private key of the client with public key of the
+     server (or vice versa)
+    :return: handshake_secret
+    """
+    return hkdf_extract(shared_secret, get_derived_secret())
