@@ -119,3 +119,12 @@ def get_server_handshake_iv(server_secret):
     label = b'iv'
     ctx = b''
     return hkdf_expand_label(server_secret, label, ctx, 12)
+
+def get_master_secret(derived_secret):
+    """
+    Calculates the master secret by performing HKDF-Extract
+
+    :param derived_secret: derived secret obtained from the handshake secret
+    :return: master_secret
+    """
+    return hkdf_extract(get_32_zero_bytes(), derived_secret)
