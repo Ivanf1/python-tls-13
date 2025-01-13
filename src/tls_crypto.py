@@ -128,3 +128,7 @@ def get_master_secret(derived_secret):
     :return: master_secret
     """
     return hkdf_extract(get_32_zero_bytes(), derived_secret)
+
+def get_client_secret_application(master_secret, handshake_hash):
+    label = b'c ap traffic'
+    return hkdf_expand_label(master_secret, label, handshake_hash, 32)
