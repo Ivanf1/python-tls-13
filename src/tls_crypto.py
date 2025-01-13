@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import secrets
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -13,3 +15,15 @@ def get_32_random_bytes():
 
 def get_32_zero_bytes():
     return b"\x00" * 32
+
+def hkdf_extract(input_keying_material, salt):
+    """
+    Perform HKDF-Extract.
+
+    :param input_keying_material: Input keying material (bytes)
+    :param salt: Optional salt (bytes). If not provided, a string of zeroes the same length as the hash output will be used.
+    :return: A pseudorandom key (PRK).
+    """
+
+    hash_alg = hashlib.sha256
+    return hmac.new(salt, input_keying_material, hash_alg).digest()
