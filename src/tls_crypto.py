@@ -88,3 +88,7 @@ def get_shared_secret(private_key: X25519PrivateKey, public_key: X25519PublicKey
 def get_client_secret(handshake_secret, hello_hash):
     label = b'c hs traffic'
     return hkdf_expand_label(handshake_secret, label, hello_hash, 32)
+
+def get_server_secret(handshake_secret, hello_hash):
+    label = b's hs traffic'
+    return hkdf_expand_label(handshake_secret, label, hello_hash, 32)
