@@ -166,3 +166,14 @@ def get_client_application_iv(client_secret):
     label = b'iv'
     ctx = b''
     return hkdf_expand_label(client_secret, label, ctx, 12)
+
+def get_server_application_iv(server_secret):
+    """
+
+    :param server_secret: the server secret (application) obtained from the master secret
+    :return: server_application_iv
+    """
+    label = b'iv'
+    ctx = b''
+    return hkdf_expand_label(server_secret, label, ctx, 12)
+

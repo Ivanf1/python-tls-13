@@ -6,7 +6,8 @@ from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_z
     get_shared_secret, get_client_secret_handshake, get_server_secret_handshake, get_client_handshake_key, \
     get_server_handshake_key, \
     get_client_handshake_iv, get_server_handshake_iv, get_master_secret, get_client_secret_application, \
-    get_server_secret_application, get_client_application_key, get_server_application_key, get_client_application_iv
+    get_server_secret_application, get_client_application_key, get_server_application_key, get_client_application_iv, \
+    get_server_application_iv
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -246,4 +247,14 @@ class TestTLSCrypto(unittest.TestCase):
         client_application_iv = get_client_application_iv(client_secret)
         expected_client_application_iv = bytes.fromhex("""5b 78 92 3d ee 08 57 90 33 e5 23 d9""")
         self.assertEqual(client_application_iv, expected_client_application_iv)
+
+    def test_should_return_server_application_iv(self):
+        # https://datatracker.ietf.org/doc/html/rfc8448#page-11
+        # section: {server}  derive write traffic keys for application data
+        server_secret = bytes.fromhex("""a1 1a f9 f0 55 31 f8 56 ad 47 11 6b 45 a9
+         50 32 82 04 b4 f4 4b fb 6b 3a 4b 4f 1f 3f cb 63 16 43""")
+        server_application_iv = get_server_application_iv(server_secret)
+        expected_server_application_iv = bytes.fromhex("""cf 78 2b 88 dd 83 54 9a ad f1 e9 84""")
+        self.assertEqual(server_application_iv, expected_server_application_iv)
+
 
