@@ -27,3 +27,14 @@ def hkdf_extract(input_keying_material, salt):
 
     hash_alg = hashlib.sha256
     return hmac.new(salt, input_keying_material, hash_alg).digest()
+
+def get_early_secret():
+    """
+    Calculates the early secret performing HKDF-Extract.
+    early_secret = HKDF-Extract(salt: 00, key: 00...)
+
+    :return: early_secret
+    """
+    ikm = get_32_zero_bytes()
+    salt = get_32_zero_bytes()
+    return hkdf_extract(ikm, salt)

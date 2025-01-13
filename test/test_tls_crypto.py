@@ -1,6 +1,7 @@
 import unittest
 
-from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract
+from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
+    get_early_secret
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -32,3 +33,11 @@ class TestTLSCrypto(unittest.TestCase):
         expected_hkdf_extract_result = bytes.fromhex("""33 ad 0a 1c 60 7e c0 3b 09 e6 cd 98 93 68 0c
          e2 10 ad f3 00 aa 1f 26 60 e1 b2 2e 10 f1 70 f9 2a""")
         self.assertEqual(hkdf_extract_result, expected_hkdf_extract_result)
+
+    # https://datatracker.ietf.org/doc/html/rfc8448#page-4
+    # section: {server}  extract secret "early"
+    def test_should_return_early_secret(self):
+        early_secret = get_early_secret()
+        expected_early_secret = bytes.fromhex("""33 ad 0a 1c 60 7e c0 3b 09 e6 cd 98 93 68 0c
+         e2 10 ad f3 00 aa 1f 26 60 e1 b2 2e 10 f1 70 f9 2a""")
+        self.assertEqual(early_secret, expected_early_secret)
