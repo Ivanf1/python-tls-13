@@ -20,14 +20,14 @@ class TestClientHello(unittest.TestCase):
 
     def test_should_return_server_name_extension(self):
         c = ClientHello("example.ulfheim.net")
-        server_name_extension = c.get_extension_server_name()
+        server_name_extension = c.get_extension_server_name_extension()
         expected_server_name_extension = bytes.fromhex("""00 00 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 75 6c 66 
             68 65 69 6d 2e 6e 65 74""")
         self.assertEqual(server_name_extension, expected_server_name_extension)
 
     def test_should_return_supported_groups_extension(self):
         c = ClientHello("")
-        supported_groups_extension = c.get_supported_groups()
+        supported_groups_extension = c.get_supported_groups_extension()
         expected_supported_groups_extension = bytes.fromhex("""00 0a 00 02 00 1d""")
         self.assertEqual(supported_groups_extension, expected_supported_groups_extension)
 

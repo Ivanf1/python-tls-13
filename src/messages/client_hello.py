@@ -14,11 +14,11 @@ class ClientHello:
         TLS_AES_128_GCM_SHA256 = b'\x13\x01'
         return len(TLS_AES_128_GCM_SHA256).to_bytes(2) + TLS_AES_128_GCM_SHA256
 
-    def get_extension_server_name(self):
+    def get_extension_server_name_extension(self):
         server_name_extension_flag = b'\x00\x00'
         return self.__build_extension(server_name_extension_flag, self.__build_server_name())
 
-    def get_supported_groups(self):
+    def get_supported_groups_extension(self):
         supported_groups_extension_flag = b'\x00\x0a'
         group_x25519 = b'\x00\x1d'
         return self.__build_extension(supported_groups_extension_flag, group_x25519)
