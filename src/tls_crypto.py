@@ -92,3 +92,8 @@ def get_client_secret(handshake_secret, hello_hash):
 def get_server_secret(handshake_secret, hello_hash):
     label = b's hs traffic'
     return hkdf_expand_label(handshake_secret, label, hello_hash, 32)
+
+def get_client_handshake_key(client_secret):
+    label = b'key'
+    ctx = b''
+    return hkdf_expand_label(client_secret, label, ctx, 16)
