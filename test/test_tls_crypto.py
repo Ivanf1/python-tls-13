@@ -1,6 +1,6 @@
 import unittest
 
-from src.tls_crypto import get_X25519_private_key
+from src.tls_crypto import get_X25519_private_key, get_32_random_bytes
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -15,3 +15,7 @@ class TestTLSCrypto(unittest.TestCase):
         private_key = get_X25519_private_key()
         public_key = get_X25519_public_key(private_key)
         self.assertTrue(isinstance(public_key, X25519PublicKey))
+
+    def test_should_return_32_random_bytes(self):
+        random_bytes = get_32_random_bytes()
+        self.assertIs(len(random_bytes), 32)
