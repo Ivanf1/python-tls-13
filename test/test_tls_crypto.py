@@ -2,7 +2,8 @@ import unittest
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
     get_early_secret, get_empty_hash_256, hkdf_expand_label, get_derived_secret, get_handshake_secret, \
-    get_shared_secret, get_client_secret, get_server_secret, get_client_handshake_key, get_server_handshake_key
+    get_shared_secret, get_client_secret, get_server_secret, get_client_handshake_key, get_server_handshake_key, \
+    get_client_handshake_iv
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -151,3 +152,10 @@ class TestTLSCrypto(unittest.TestCase):
         expected_server_handshake_key = bytes.fromhex("""3f ce 51 60 09 c2 17 27 d0 f2 e4 e8 6e
          e4 03 bc""")
         self.assertEqual(server_handshake_key, expected_server_handshake_key)
+
+    def test_should_return_client_handshake_iv(self):
+        client_secret = bytes.fromhex("""b3 ed db 12 6e 06 7f 35 a7 80 b3 ab f4 5e
+         2d 8f 3b 1a 95 07 38 f5 2e 96 00 74 6a 0e 27 a5 5a 21""")
+        client_handshake_iv = get_client_handshake_iv(client_secret)
+        expected_client_handshake_iv = bytes.fromhex("""5b d3 c7 1b 83 6e 0b 76 bb 73 26 5f""")
+        self.assertEqual(client_handshake_iv, expected_client_handshake_iv)
