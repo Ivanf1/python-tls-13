@@ -1,7 +1,8 @@
 import unittest
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
-    get_early_secret, get_empty_hash_256, hkdf_expand_label, get_derived_secret, get_handshake_secret, get_shared_secret
+    get_early_secret, get_empty_hash_256, hkdf_expand_label, get_derived_secret, get_handshake_secret, \
+    get_shared_secret, get_client_secret
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -106,3 +107,15 @@ class TestTLSCrypto(unittest.TestCase):
         expected_shared_secret = bytes.fromhex("""8b d4 05 4f b5 5b 9d 63 fd fb ac f9 f0 4b 9f 0d
          35 e6 d6 3f 53 75 63 ef d4 62 72 90 0f 89 49 2d""")
         self.assertEqual(shared_secret, expected_shared_secret)
+
+    def test_should_return_client_secret(self):
+        # https://datatracker.ietf.org/doc/html/rfc8448#page-5
+        # section: {server}  derive secret "tls13 c hs traffic"
+        handshake_secret = bytes.fromhex("""1d c8 26 e9 36 06 aa 6f dc 0a ad c1 2f 74 1b
+         01 04 6a a6 b9 9f 69 1e d2 21 a9 f0 ca 04 3f be ac""")
+        hello_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
+         d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
+        client_secret = get_client_secret(handshake_secret, hello_hash)
+        expected_client_secret = bytes.fromhex("""b3 ed db 12 6e 06 7f 35 a7 80 b3 ab f4 5e
+         2d 8f 3b 1a 95 07 38 f5 2e 96 00 74 6a 0e 27 a5 5a 21""")
+        self.assertEqual(client_secret, expected_client_secret)
