@@ -11,3 +11,9 @@ class TestClientHello(unittest.TestCase):
     def test_should_return_client_random(self):
         c = ClientHello()
         self.assertIs(len(c.client_random), 32)
+
+    def test_should_return_supported_cipher_suites(self):
+        c = ClientHello()
+        supported_cipher_suites = c.get_supported_cipher_suites()
+        expected_supported_cipher_suites = bytes.fromhex("""00 02 13 01""")
+        self.assertEqual(supported_cipher_suites, expected_supported_cipher_suites)
