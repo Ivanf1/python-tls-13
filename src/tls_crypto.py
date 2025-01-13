@@ -107,3 +107,8 @@ def get_client_handshake_iv(client_secret):
     label = b'iv'
     ctx = b''
     return hkdf_expand_label(client_secret, label, ctx, 12)
+
+def get_server_handshake_iv(server_secret):
+    label = b'iv'
+    ctx = b''
+    return hkdf_expand_label(server_secret, label, ctx, 12)
