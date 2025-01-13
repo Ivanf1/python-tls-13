@@ -18,6 +18,9 @@ def get_32_random_bytes():
 def get_32_zero_bytes():
     return b"\x00" * 32
 
+def get_empty_hash_256():
+    return hashlib.sha256().digest()
+
 def hkdf_extract(input_keying_material, salt):
     """
     Perform HKDF-Extract.
@@ -29,20 +32,6 @@ def hkdf_extract(input_keying_material, salt):
 
     hash_alg = hashlib.sha256
     return hmac.new(salt, input_keying_material, hash_alg).digest()
-
-def get_early_secret():
-    """
-    Calculates the early secret performing HKDF-Extract.
-    early_secret = HKDF-Extract(salt: 00, key: 00...)
-
-    :return: early_secret
-    """
-    ikm = get_32_zero_bytes()
-    salt = get_32_zero_bytes()
-    return hkdf_extract(ikm, salt)
-
-def get_empty_hash_256():
-    return hashlib.sha256().digest()
 
 def hkdf_expand_label(secret, label, context, length):
     """
@@ -66,3 +55,14 @@ def hkdf_expand_label(secret, label, context, length):
     hkdf_expand = HKDFExpand(algorithm=hashes.SHA256(), length=length, info=hkdf_label)
 
     return hkdf_expand.derive(secret)
+
+def get_early_secret():
+    """
+    Calculates the early secret performing HKDF-Extract.
+    early_secret = HKDF-Extract(salt: 00, key: 00...)
+
+    :return: early_secret
+    """
+    ikm = get_32_zero_bytes()
+    salt = get_32_zero_bytes()
+    return hkdf_extract(ikm, salt)
