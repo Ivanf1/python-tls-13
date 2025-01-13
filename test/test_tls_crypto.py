@@ -1,7 +1,7 @@
 import unittest
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
-    get_early_secret, get_empty_hash_256, hkdf_expand_label, get_derived_secret, get_handshake_secret
+    get_early_secret, get_empty_hash_256, hkdf_expand_label, get_derived_secret, get_handshake_secret, get_shared_secret
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -88,3 +88,21 @@ class TestTLSCrypto(unittest.TestCase):
         expected_handshake_secret = bytes.fromhex("""1d c8 26 e9 36 06 aa 6f dc 0a ad c1 2f 74 1b
          01 04 6a a6 b9 9f 69 1e d2 21 a9 f0 ca 04 3f be ac""")
         self.assertEqual(handshake_secret, expected_handshake_secret)
+
+    def test_should_return_shared_secret(self):
+        # https://datatracker.ietf.org/doc/html/rfc8448#page-3
+        # section: {client}  create an ephemeral x25519 key pair
+        private_key = X25519PrivateKey.from_private_bytes(bytes.fromhex("""49 af 42 ba 7f 79 94 85 2d 71 3e f2 78
+         4b cb ca a7 91 1d e2 6a dc 56 42 cb 63 45 40 e7 ea 50 05"""))
+
+        # https://datatracker.ietf.org/doc/html/rfc8448#page-5
+        # section: {server}  create an ephemeral x25519 key pair
+        public_key = X25519PublicKey.from_public_bytes(bytes.fromhex("""c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6
+         72 e1 56 d6 cc 25 3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f"""))
+
+        # https://datatracker.ietf.org/doc/html/rfc8448#page-5
+        # section: {server}  extract secret "handshake"
+        shared_secret = get_shared_secret(private_key, public_key)
+        expected_shared_secret = bytes.fromhex("""8b d4 05 4f b5 5b 9d 63 fd fb ac f9 f0 4b 9f 0d
+         35 e6 d6 3f 53 75 63 ef d4 62 72 90 0f 89 49 2d""")
+        self.assertEqual(shared_secret, expected_shared_secret)

@@ -3,6 +3,7 @@ import hmac
 import secrets
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDFExpand
 from cryptography.hazmat.primitives import hashes
 
@@ -80,3 +81,6 @@ def get_handshake_secret(shared_secret):
     :return: handshake_secret
     """
     return hkdf_extract(shared_secret, get_derived_secret())
+
+def get_shared_secret(private_key: X25519PrivateKey, public_key: X25519PublicKey):
+    return private_key.exchange(public_key)
