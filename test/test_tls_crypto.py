@@ -68,7 +68,9 @@ class TestTLSCrypto(unittest.TestCase):
     # https://datatracker.ietf.org/doc/html/rfc8448#page-5
     # section: {server}  derive secret for handshake "tls13 derived"
     def test_should_return_derived_secret(self):
-        derived_secret = get_derived_secret()
+        early_secret = bytes.fromhex("""33 ad 0a 1c 60 7e c0 3b 09 e6 cd 98 93 68 0c
+         e2 10 ad f3 00 aa 1f 26 60 e1 b2 2e 10 f1 70 f9 2a""")
+        derived_secret = get_derived_secret(early_secret)
         expected_derived_secret = bytes.fromhex("""6f 26 15 a1 08 c7 02 c5 67 8f 54 fc 9d ba
          b6 97 16 c0 76 18 9c 48 25 0c eb ea c3 57 6c 36 11 ba""")
         self.assertEqual(derived_secret, expected_derived_secret)
@@ -76,9 +78,11 @@ class TestTLSCrypto(unittest.TestCase):
     # https://datatracker.ietf.org/doc/html/rfc8448#page-5
     # section: {server}  extract secret "handshake"
     def test_should_return_handshake_secret(self):
+        derived_secret = bytes.fromhex("""6f 26 15 a1 08 c7 02 c5 67 8f 54 fc 9d ba
+         b6 97 16 c0 76 18 9c 48 25 0c eb ea c3 57 6c 36 11 ba""")
         shared_secret = bytes.fromhex("""8b d4 05 4f b5 5b 9d 63 fd fb ac f9 f0 4b 9f 0d
          35 e6 d6 3f 53 75 63 ef d4 62 72 90 0f 89 49 2d""")
-        handshake_secret = get_handshake_secret(shared_secret)
+        handshake_secret = get_handshake_secret(shared_secret, derived_secret)
         expected_handshake_secret = bytes.fromhex("""1d c8 26 e9 36 06 aa 6f dc 0a ad c1 2f 74 1b
          01 04 6a a6 b9 9f 69 1e d2 21 a9 f0 ca 04 3f be ac""")
         self.assertEqual(handshake_secret, expected_handshake_secret)
@@ -86,7 +90,9 @@ class TestTLSCrypto(unittest.TestCase):
     def test_should_return_handshake_secret_using_defined_keys(self):
         shared_secret = bytes.fromhex("""8b d4 05 4f b5 5b 9d 63 fd fb ac f9 f0 4b 9f 0d
          35 e6 d6 3f 53 75 63 ef d4 62 72 90 0f 89 49 2d""")
-        handshake_secret = get_handshake_secret(shared_secret)
+        derived_secret = bytes.fromhex("""6f 26 15 a1 08 c7 02 c5 67 8f 54 fc 9d ba
+         b6 97 16 c0 76 18 9c 48 25 0c eb ea c3 57 6c 36 11 ba""")
+        handshake_secret = get_handshake_secret(shared_secret, derived_secret)
         expected_handshake_secret = bytes.fromhex("""1d c8 26 e9 36 06 aa 6f dc 0a ad c1 2f 74 1b
          01 04 6a a6 b9 9f 69 1e d2 21 a9 f0 ca 04 3f be ac""")
         self.assertEqual(handshake_secret, expected_handshake_secret)

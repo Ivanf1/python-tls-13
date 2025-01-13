@@ -68,19 +68,26 @@ def get_early_secret():
     salt = get_32_zero_bytes()
     return hkdf_extract(ikm, salt)
 
-def get_derived_secret():
-    label = b'derived'
-    return hkdf_expand_label(get_early_secret(), label, get_empty_hash_256(), 32)
+def get_derived_secret(key):
+    """
+    Calculates the derived secret by performing HKDF-Expand-Label
 
-def get_handshake_secret(shared_secret):
+    :param key: either the early secret or the handshake secret
+    :return: derived_secret
+    """
+    label = b'derived'
+    return hkdf_expand_label(key, label, get_empty_hash_256(), 32)
+
+def get_handshake_secret(shared_secret, derived_secret):
     """
     Calculates the handshake secret performing HKDF-Extract.
 
     :param shared_secret: calculated by performing key exchange from private key of the client with public key of the
      server (or vice versa)
+    :param derived_secret: derived secret obtained from the early secret
     :return: handshake_secret
     """
-    return hkdf_extract(shared_secret, get_derived_secret())
+    return hkdf_extract(shared_secret, derived_secret)
 
 def get_shared_secret(private_key: X25519PrivateKey, public_key: X25519PublicKey):
     return private_key.exchange(public_key)
