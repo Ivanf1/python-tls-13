@@ -2,7 +2,7 @@ import unittest
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
     get_early_secret, get_empty_hash_256, hkdf_expand_label, get_derived_secret, get_handshake_secret, \
-    get_shared_secret, get_client_secret, get_server_secret, get_client_handshake_key
+    get_shared_secret, get_client_secret, get_server_secret, get_client_handshake_key, get_server_handshake_key
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -141,3 +141,13 @@ class TestTLSCrypto(unittest.TestCase):
         expected_client_handshake_key = bytes.fromhex("""db fa a6 93 d1 76 2c 5b 66 6a f5 d9 50
          25 8d 01""")
         self.assertEqual(client_handshake_key, expected_client_handshake_key)
+
+    def test_should_return_server_handshake_key(self):
+        # https://datatracker.ietf.org/doc/html/rfc8448#page-7
+        # section: {server}  derive write traffic keys for handshake data
+        server_secret = bytes.fromhex("""b6 7b 7d 69 0c c1 6c 4e 75 e5 42 13 cb 2d
+         37 b4 e9 c9 12 bc de d9 10 5d 42 be fd 59 d3 91 ad 38""")
+        server_handshake_key = get_server_handshake_key(server_secret)
+        expected_server_handshake_key = bytes.fromhex("""3f ce 51 60 09 c2 17 27 d0 f2 e4 e8 6e
+         e4 03 bc""")
+        self.assertEqual(server_handshake_key, expected_server_handshake_key)

@@ -97,3 +97,8 @@ def get_client_handshake_key(client_secret):
     label = b'key'
     ctx = b''
     return hkdf_expand_label(client_secret, label, ctx, 16)
+
+def get_server_handshake_key(server_secret):
+    label = b'key'
+    ctx = b''
+    return hkdf_expand_label(server_secret, label, ctx, 16)
