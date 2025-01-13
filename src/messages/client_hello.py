@@ -1,10 +1,12 @@
 from src.tls_crypto import get_32_random_bytes
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
 class ClientHello:
-    def __init__(self, server_name):
+    def __init__(self, server_name, public_key: X25519PublicKey):
         self.CLIENT_VERSION = b'\x03\x03'
         self.client_random = get_32_random_bytes()
         self.server_name = server_name
+        self.public_key = public_key
 
     @staticmethod
     def get_supported_cipher_suites():
@@ -35,6 +37,12 @@ class ClientHello:
         tls_13 = b'\x03\x04'
         return self.__build_extension(supported_versions_flag, tls_13)
 
+    def get_key_share_extension(self):
+        # 1 -- assigned value for extension "key share"
+        key_share_flag = b'\x00\x33'
+
+        return self.__build_key_share(key_share_flag)
+
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
         # Each extension starts with a flag indicating the type of extension which has a length of 2 bytes.
@@ -52,3 +60,12 @@ class ClientHello:
         list_entry_type_dns_hostname = b'\x00'
 
         return list_entry_type_dns_hostname + encoded_server_hostname_len_bytes + encoded_server_hostname
+
+    def __build_key_share(self, flag):
+        curve_25519_flag = b'\x00\x1d'
+
+        public_key_len_bytes = len(self.public_key.public_bytes_raw()).to_bytes(2)
+
+        key_share_data_len_bytes = (len(self.public_key.public_bytes_raw()) + 2 + 2).to_bytes(2)
+
+        return flag + key_share_data_len_bytes + curve_25519_flag + public_key_len_bytes + self.public_key.public_bytes_raw()
