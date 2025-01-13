@@ -25,3 +25,9 @@ class TestClientHello(unittest.TestCase):
             68 65 69 6d 2e 6e 65 74""")
         self.assertEqual(server_name_extension, expected_server_name_extension)
 
+    def test_should_return_supported_groups_extension(self):
+        c = ClientHello("")
+        supported_groups_extension = c.get_supported_groups()
+        expected_supported_groups_extension = bytes.fromhex("""00 0a 00 02 00 1d""")
+        self.assertEqual(supported_groups_extension, expected_supported_groups_extension)
+

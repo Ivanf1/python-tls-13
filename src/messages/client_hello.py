@@ -18,6 +18,11 @@ class ClientHello:
         server_name_extension_flag = b'\x00\x00'
         return self.__build_extension(server_name_extension_flag, self.__build_server_name())
 
+    def get_supported_groups(self):
+        supported_groups_extension_flag = b'\x00\x0a'
+        group_x25519 = b'\x00\x1d'
+        return self.__build_extension(supported_groups_extension_flag, group_x25519)
+
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
         # Each extension starts with a flag indicating the type of extension which has a length of 2 bytes.
