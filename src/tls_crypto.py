@@ -136,3 +136,13 @@ def get_client_secret_application(master_secret, handshake_hash):
 def get_server_secret_application(master_secret, handshake_hash):
     label = b's ap traffic'
     return hkdf_expand_label(master_secret, label, handshake_hash, 32)
+
+def get_client_application_key(client_secret):
+    """
+
+    :param client_secret: the client secret (application) obtained from the master secret
+    :return: client_application_key
+    """
+    label = b'key'
+    ctx = b''
+    return hkdf_expand_label(client_secret, label, ctx, 16)
