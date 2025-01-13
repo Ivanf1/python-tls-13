@@ -23,6 +23,12 @@ class ClientHello:
         group_x25519 = b'\x00\x1d'
         return self.__build_extension(supported_groups_extension_flag, group_x25519)
 
+    def get_signature_algorithms_extension(self):
+        # assigned value for extension "signature algorithms"
+        supported_signature_algorithms_flag = b'\x00\x0d'
+        algorithm_ECDSA_SECP256r1_SHA256 =  b'\x04\x03'
+        return self.__build_extension(supported_signature_algorithms_flag, algorithm_ECDSA_SECP256r1_SHA256)
+
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
         # Each extension starts with a flag indicating the type of extension which has a length of 2 bytes.
