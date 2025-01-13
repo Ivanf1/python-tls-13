@@ -36,3 +36,9 @@ class TestClientHello(unittest.TestCase):
         signature_algorithms_extension = c.get_signature_algorithms_extension()
         expected_signature_algorithms_extension = bytes.fromhex("""00 0d 00 02 04 03""")
         self.assertEqual(signature_algorithms_extension, expected_signature_algorithms_extension)
+
+    def test_should_return_supported_versions_extension(self):
+        c = ClientHello("")
+        supported_versions_extension = c.get_supported_versions_extension()
+        expected_supported_versions_extension = bytes.fromhex("""00 2b 00 02 03 04""")
+        self.assertEqual(supported_versions_extension, expected_supported_versions_extension)

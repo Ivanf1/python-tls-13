@@ -29,6 +29,12 @@ class ClientHello:
         algorithm_ECDSA_SECP256r1_SHA256 =  b'\x04\x03'
         return self.__build_extension(supported_signature_algorithms_flag, algorithm_ECDSA_SECP256r1_SHA256)
 
+    def get_supported_versions_extension(self):
+        # assigned value for extension "supported versions"
+        supported_versions_flag = b'\x00\x2b'
+        tls_13 = b'\x03\x04'
+        return self.__build_extension(supported_versions_flag, tls_13)
+
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
         # Each extension starts with a flag indicating the type of extension which has a length of 2 bytes.
