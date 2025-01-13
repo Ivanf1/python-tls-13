@@ -132,3 +132,7 @@ def get_master_secret(derived_secret):
 def get_client_secret_application(master_secret, handshake_hash):
     label = b'c ap traffic'
     return hkdf_expand_label(master_secret, label, handshake_hash, 32)
+
+def get_server_secret_application(master_secret, handshake_hash):
+    label = b's ap traffic'
+    return hkdf_expand_label(master_secret, label, handshake_hash, 32)
