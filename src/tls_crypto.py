@@ -10,3 +10,6 @@ def get_X25519_public_key(private_key: X25519PrivateKey):
 
 def get_32_random_bytes():
     return secrets.token_bytes(32)
+
+def get_32_zero_bytes():
+    return b"\x00" * 32
