@@ -92,11 +92,11 @@ def get_handshake_secret(shared_secret, derived_secret):
 def get_shared_secret(private_key: X25519PrivateKey, public_key: X25519PublicKey):
     return private_key.exchange(public_key)
 
-def get_client_secret(handshake_secret, hello_hash):
+def get_client_secret_handshake(handshake_secret, hello_hash):
     label = b'c hs traffic'
     return hkdf_expand_label(handshake_secret, label, hello_hash, 32)
 
-def get_server_secret(handshake_secret, hello_hash):
+def get_server_secret_handshake(handshake_secret, hello_hash):
     label = b's hs traffic'
     return hkdf_expand_label(handshake_secret, label, hello_hash, 32)
 

@@ -3,7 +3,7 @@ import unittest
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
     get_early_secret, get_empty_hash_256, hkdf_expand_label, get_derived_secret, get_handshake_secret, \
-    get_shared_secret, get_client_secret, get_server_secret, get_client_handshake_key, get_server_handshake_key, \
+    get_shared_secret, get_client_secret_handshake, get_server_secret_handshake, get_client_handshake_key, get_server_handshake_key, \
     get_client_handshake_iv, get_server_handshake_iv, get_master_secret
 from src.tls_crypto import get_X25519_public_key
 
@@ -123,7 +123,7 @@ class TestTLSCrypto(unittest.TestCase):
          01 04 6a a6 b9 9f 69 1e d2 21 a9 f0 ca 04 3f be ac""")
         hello_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
          d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
-        client_secret = get_client_secret(handshake_secret, hello_hash)
+        client_secret = get_client_secret_handshake(handshake_secret, hello_hash)
         expected_client_secret = bytes.fromhex("""b3 ed db 12 6e 06 7f 35 a7 80 b3 ab f4 5e
          2d 8f 3b 1a 95 07 38 f5 2e 96 00 74 6a 0e 27 a5 5a 21""")
         self.assertEqual(client_secret, expected_client_secret)
@@ -135,7 +135,7 @@ class TestTLSCrypto(unittest.TestCase):
          01 04 6a a6 b9 9f 69 1e d2 21 a9 f0 ca 04 3f be ac""")
         hello_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
          d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
-        server_secret = get_server_secret(handshake_secret, hello_hash)
+        server_secret = get_server_secret_handshake(handshake_secret, hello_hash)
         expected_server_secret = bytes.fromhex("""b6 7b 7d 69 0c c1 6c 4e 75 e5 42 13 cb 2d
          37 b4 e9 c9 12 bc de d9 10 5d 42 be fd 59 d3 91 ad 38""")
         self.assertEqual(server_secret, expected_server_secret)
