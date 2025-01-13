@@ -1,7 +1,7 @@
 import unittest
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
-    get_early_secret, get_empty_hash_256
+    get_early_secret, get_empty_hash_256, hkdf_expand_label
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -49,3 +49,16 @@ class TestTLSCrypto(unittest.TestCase):
         expected_empty_hash = bytes.fromhex("""e3 b0 c4 42 98 fc 1c 14 9a fb f4 c8 99 6f b9 24
          27 ae 41 e4 64 9b 93 4c a4 95 99 1b 78 52 b8 55""")
         self.assertEqual(empty_hash, expected_empty_hash)
+
+    def test_should_perform_hkdf_expand_label(self):
+        secret = bytes.fromhex("""33 ad 0a 1c 60 7e c0 3b 09 e6 cd 98 93 68 0c
+         e2 10 ad f3 00 aa 1f 26 60 e1 b2 2e 10 f1 70 f9 2a""")
+        label = b'derived'
+        context = bytes.fromhex("""e3 b0 c4 42 98 fc 1c 14 9a fb f4 c8 99 6f b9 24
+         27 ae 41 e4 64 9b 93 4c a4 95 99 1b 78 52 b8 55""")
+
+        expanded_label = hkdf_expand_label(secret, label, context, 32)
+        expected_expanded_label = bytes.fromhex("""6f 26 15 a1 08 c7 02 c5 67 8f 54 fc 9d ba
+         b6 97 16 c0 76 18 9c 48 25 0c eb ea c3 57 6c 36 11 ba""")
+
+        self.assertEqual(expanded_label, expected_expanded_label)

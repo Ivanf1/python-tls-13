@@ -3,6 +3,8 @@ import hmac
 import secrets
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+from cryptography.hazmat.primitives.kdf.hkdf import HKDFExpand
+from cryptography.hazmat.primitives import hashes
 
 def get_X25519_private_key():
     return X25519PrivateKey.generate()
@@ -41,3 +43,26 @@ def get_early_secret():
 
 def get_empty_hash_256():
     return hashlib.sha256().digest()
+
+def hkdf_expand_label(secret, label, context, length):
+    """
+    Perform HKDF-Expand-Label as defined in TLS 1.3.
+
+    https://datatracker.ietf.org/doc/html/rfc8446#section-7.1
+    """
+
+    # Construct the HkdfLabel structure
+    label_prefix = b"tls13 "
+    full_label = label_prefix + label
+    hkdf_label = (
+            length.to_bytes(2, "big") +  # Length of output (2 bytes)
+            len(full_label).to_bytes(1, "big") +  # Length of the label (1 byte)
+            full_label +  # Label
+            len(context).to_bytes(1, "big") +  # Length of Context (1 byte)
+            context  # Context
+    )
+
+    # Perform HKDF-Expand
+    hkdf_expand = HKDFExpand(algorithm=hashes.SHA256(), length=length, info=hkdf_label)
+
+    return hkdf_expand.derive(secret)
