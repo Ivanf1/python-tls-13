@@ -1,7 +1,7 @@
 import unittest
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
-    get_early_secret
+    get_early_secret, get_empty_hash_256
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -41,3 +41,11 @@ class TestTLSCrypto(unittest.TestCase):
         expected_early_secret = bytes.fromhex("""33 ad 0a 1c 60 7e c0 3b 09 e6 cd 98 93 68 0c
          e2 10 ad f3 00 aa 1f 26 60 e1 b2 2e 10 f1 70 f9 2a""")
         self.assertEqual(early_secret, expected_early_secret)
+
+    # https://datatracker.ietf.org/doc/html/rfc8448#page-5
+    # section: {server}  derive secret for handshake "tls13 derived"
+    def test_should_return_empty_hash(self):
+        empty_hash = get_empty_hash_256()
+        expected_empty_hash = bytes.fromhex("""e3 b0 c4 42 98 fc 1c 14 9a fb f4 c8 99 6f b9 24
+         27 ae 41 e4 64 9b 93 4c a4 95 99 1b 78 52 b8 55""")
+        self.assertEqual(empty_hash, expected_empty_hash)

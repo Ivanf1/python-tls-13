@@ -38,3 +38,6 @@ def get_early_secret():
     ikm = get_32_zero_bytes()
     salt = get_32_zero_bytes()
     return hkdf_extract(ikm, salt)
+
+def get_empty_hash_256():
+    return hashlib.sha256().digest()
