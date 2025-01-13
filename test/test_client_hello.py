@@ -7,3 +7,7 @@ class TestClientHello(unittest.TestCase):
         c = ClientHello()
         expected_client_version = bytes.fromhex("""03 03""")
         self.assertEqual(c.CLIENT_VERSION, expected_client_version)
+
+    def test_should_return_client_random(self):
+        c = ClientHello()
+        self.assertIs(len(c.client_random), 32)
