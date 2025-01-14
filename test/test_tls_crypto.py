@@ -7,11 +7,14 @@ from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_z
     get_server_handshake_key, \
     get_client_handshake_iv, get_server_handshake_iv, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_server_application_key, get_client_application_iv, \
-    get_server_application_iv, get_finished_secret, get_hash_sha256, get_hmac_sha256
+    get_server_application_iv, get_finished_secret, get_hash_sha256, get_hmac_sha256, encrypt
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
+
+from src.utils import RecordHeaderType
+
 
 class TestTLSCrypto(unittest.TestCase):
     def test_should_return_x25519_private_key(self):
@@ -298,3 +301,18 @@ class TestTLSCrypto(unittest.TestCase):
         server_application_iv = get_server_application_iv(server_secret)
         expected_server_application_iv = bytes.fromhex("""cf 78 2b 88 dd 83 54 9a ad f1 e9 84""")
         self.assertEqual(server_application_iv, expected_server_application_iv)
+
+    # https://tls13.xargs.org/#wrapped-record
+    def test_should_encrypt_data(self):
+        # server handshake key
+        key = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
+        # server handshake iv
+        nonce = bytes.fromhex("""9563bc8b590f671f488d2da3""")
+        # encrypted extensions
+        data = bytes.fromhex("""08 00 00 02 00 00 16""")
+        # record header
+        aad = bytes.fromhex("""17 03 03 00 17""")
+
+        encrypted_data = encrypt(key, nonce, data, aad, RecordHeaderType.HANDSHAKE)
+        expected_encrypted_data = bytes.fromhex("""6b e0 2f 9d a7 c2 dc 9d de f5 6f 24 68 b9 0a df a2 51 01 ab 03 44 ae""")
+        self.assertEqual(encrypted_data, expected_encrypted_data)
