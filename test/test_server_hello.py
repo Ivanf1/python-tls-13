@@ -45,4 +45,20 @@ class TestServerHello(unittest.TestCase):
         server_hello_message_header = self.server_hello.get_message_header(data)
         expected_server_hello_message_header = bytes.fromhex("""02 00 00 56""")
         self.assertEqual(server_hello_message_header, expected_server_hello_message_header)
-        
+
+
+    @patch("secrets.token_bytes")
+    def test_should_return_server_hello_message(self, mock_get_32_random_bytes):
+        mock_random_bytes = b'\x00' * 32
+        mock_get_32_random_bytes.return_value = mock_random_bytes
+
+        private_key = X25519PrivateKey.generate()
+        public_key = private_key.public_key()
+        s = ServerHello(public_key)
+
+        server_hello_message = s.build_server_hello()
+
+        expected_server_hello_message = bytes.fromhex(
+            """02000054030300000000000000000000000000000000000000000000000000000000000000001301002e002b0002030400330024001d0020"""
+        ) + s.public_key.public_bytes_raw()
+        self.assertEqual(server_hello_message, expected_server_hello_message)
