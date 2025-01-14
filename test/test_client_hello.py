@@ -1,4 +1,3 @@
-import binascii
 import unittest
 from unittest.mock import patch
 
@@ -8,73 +7,52 @@ from src.messages.client_hello import ClientHello
 
 
 class TestClientHello(unittest.TestCase):
+    def setUp(self):
+        self.private_key = X25519PrivateKey.generate()
+        self.public_key = self.private_key.public_key()
+
+        self.client_hello = ClientHello("example.ulfheim.net", self.public_key)
+
     def test_should_return_client_version_tls_12(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("", public_key)
         expected_client_version = bytes.fromhex("""03 03""")
-        self.assertEqual(c.CLIENT_VERSION, expected_client_version)
+        self.assertEqual(self.client_hello.CLIENT_VERSION, expected_client_version)
 
     def test_should_return_client_random(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("", public_key)
-        self.assertIs(len(c.client_random), 32)
+        self.assertIs(len(self.client_hello.client_random), 32)
 
     def test_should_return_supported_cipher_suites(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("", public_key)
-        supported_cipher_suites = c.get_supported_cipher_suites()
+        supported_cipher_suites = self.client_hello.get_supported_cipher_suites()
         expected_supported_cipher_suites = bytes.fromhex("""00 02 13 01""")
         self.assertEqual(supported_cipher_suites, expected_supported_cipher_suites)
 
     def test_should_return_server_name_extension(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("example.ulfheim.net", public_key)
-        server_name_extension = c.get_extension_server_name_extension()
+        server_name_extension = self.client_hello.get_extension_server_name_extension()
         expected_server_name_extension = bytes.fromhex("""00 00 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 75 6c 66 
             68 65 69 6d 2e 6e 65 74""")
         self.assertEqual(server_name_extension, expected_server_name_extension)
 
     def test_should_return_supported_groups_extension(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("", public_key)
-        supported_groups_extension = c.get_supported_groups_extension()
+        supported_groups_extension = self.client_hello.get_supported_groups_extension()
         expected_supported_groups_extension = bytes.fromhex("""00 0a 00 02 00 1d""")
         self.assertEqual(supported_groups_extension, expected_supported_groups_extension)
 
     def test_should_return_signature_algorithms_extension(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("", public_key)
-        signature_algorithms_extension = c.get_signature_algorithms_extension()
+        signature_algorithms_extension = self.client_hello.get_signature_algorithms_extension()
         expected_signature_algorithms_extension = bytes.fromhex("""00 0d 00 02 04 03""")
         self.assertEqual(signature_algorithms_extension, expected_signature_algorithms_extension)
 
     def test_should_return_supported_versions_extension(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("", public_key)
-        supported_versions_extension = c.get_supported_versions_extension()
+        supported_versions_extension = self.client_hello.get_supported_versions_extension()
         expected_supported_versions_extension = bytes.fromhex("""00 2b 00 02 03 04""")
         self.assertEqual(supported_versions_extension, expected_supported_versions_extension)
 
     def test_should_build_key_share_extension(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("", public_key)
-        key_share_extension = c.get_key_share_extension()
-        expected_key_share_extension = bytes.fromhex("""00 33 00 24 00 1d 00 20""") + c.public_key.public_bytes_raw()
+        key_share_extension = self.client_hello.get_key_share_extension()
+        expected_key_share_extension = bytes.fromhex("""00 33 00 24 00 1d 00 20""") + self.client_hello.public_key.public_bytes_raw()
         self.assertEqual(key_share_extension, expected_key_share_extension)
 
     # https://datatracker.ietf.org/doc/html/rfc8448#page-4
     def test_should_return_client_hello_message_header(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("", public_key)
         data = bytes.fromhex("""03 03 cb 34 ec b1 e7 81 63 ba
          1c 38 c6 da cb 19 6a 6d ff a2 1a 8d 99 12 ec 18 a2 ef 62 83 02
          4d ec e7 00 00 06 13 01 13 03 13 02 01 00 00 91 00 00 00 0b 00
@@ -85,18 +63,15 @@ class TestClientHello(unittest.TestCase):
          2c 00 2b 00 03 02 03 04 00 0d 00 20 00 1e 04 03 05 03 06 03 02
          03 08 04 08 05 08 06 04 01 05 01 06 01 02 01 04 02 05 02 06 02
          02 02 00 2d 00 02 01 01 00 1c 00 02 40 01""")
-        client_hello_message_header = c.get_message_header(data)
+        client_hello_message_header = self.client_hello.get_message_header(data)
         expected_client_hello_message_header = bytes.fromhex("""01 00 00 c0""")
         self.assertEqual(client_hello_message_header, expected_client_hello_message_header)
 
     def test_should_return_extensions_list(self):
-        private_key = X25519PrivateKey.generate()
-        public_key = private_key.public_key()
-        c = ClientHello("example.ulfheim.net", public_key)
-        extensions_list = c.get_extensions_list()
+        extensions_list = self.client_hello.get_extensions_list()
         expected_extensions_list = bytes.fromhex("""00 54 00 00 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 75 6c 66 
             68 65 69 6d 2e 6e 65 74 00 0a 00 02 00 1d 00 0d 00 02 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20""") \
-            + c.public_key.public_bytes_raw()
+            + self.client_hello.public_key.public_bytes_raw()
         self.assertEqual(extensions_list, expected_extensions_list)
 
     @patch("secrets.token_bytes")
@@ -112,6 +87,6 @@ class TestClientHello(unittest.TestCase):
 
         expected_client_hello_message = bytes.fromhex(
             """0100007c03030000000000000000000000000000000000000000000000000000000000000000000213010054000000160000136578616d706c652e756c666865696d2e6e6574000a0002001d000d00020403002b0002030400330024001d0020"""
-        ) + public_key.public_bytes_raw()
+        ) + c.public_key.public_bytes_raw()
         self.assertEqual(client_hello_message, expected_client_hello_message)
 
