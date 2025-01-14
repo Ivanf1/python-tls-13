@@ -21,7 +21,7 @@ class TestServerHello(unittest.TestCase):
 
     def test_should_return_supported_cipher_suites(self):
         supported_cipher_suites = self.server_hello.get_supported_cipher_suites()
-        expected_supported_cipher_suites = bytes.fromhex("""00 02 13 01""")
+        expected_supported_cipher_suites = bytes.fromhex("""13 01""")
         self.assertEqual(supported_cipher_suites, expected_supported_cipher_suites)
 
     def test_should_build_key_share_extension(self):
@@ -59,7 +59,7 @@ class TestServerHello(unittest.TestCase):
         server_hello_message = s.build_server_hello()
 
         expected_server_hello_message = bytes.fromhex(
-            """[]"""
+            "" " insert " ""
         ) + s.public_key.public_bytes_raw()
         self.assertEqual(server_hello_message, expected_server_hello_message)
     """

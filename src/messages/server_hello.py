@@ -20,7 +20,7 @@ class ServerHello:
         Only support TLS_AES_128_GCM_SHA256
         """
         TLS_AES_128_GCM_SHA256 = b'\x13\x01'
-        return len(TLS_AES_128_GCM_SHA256).to_bytes(2) + TLS_AES_128_GCM_SHA256
+        return TLS_AES_128_GCM_SHA256
 
     def get_key_share_extension(self):
         # 1 -- assigned value for extension "key share"
