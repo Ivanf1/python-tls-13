@@ -8,9 +8,6 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDFExpand
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from src.record_manager import RecordHeaderType
-from src.utils import record_header_type
-
 
 def get_X25519_private_key():
     return X25519PrivateKey.generate()
@@ -193,7 +190,7 @@ def get_server_application_iv(server_secret):
     ctx = b''
     return hkdf_expand_label(server_secret, label, ctx, 12)
 
-def encrypt(key, nonce, data, aad, record_type: RecordHeaderType):
+def encrypt(key, nonce, data, aad):
     """
     Encrypts the data.
 
@@ -205,7 +202,6 @@ def encrypt(key, nonce, data, aad, record_type: RecordHeaderType):
     These values are referred to the record header for the message to encrypt.
     NOTE: to the **Length** of the message you need to add 16, that is the number of bytes of
     the Auth Tag that will be appended to the message
-    :param record_type: the **actual** record type (can be different from the header type if the message
     is being disguised as a TLS 1.2 application data message)
     :return: encrypted data with the Auth Tag
     """
