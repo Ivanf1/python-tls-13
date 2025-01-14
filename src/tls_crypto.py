@@ -202,7 +202,6 @@ def encrypt(key, nonce, data, aad):
     These values are referred to the record header for the message to encrypt.
     NOTE: to the **Length** of the message you need to add 16, that is the number of bytes of
     the Auth Tag that will be appended to the message
-    is being disguised as a TLS 1.2 application data message)
     :return: encrypted data with the Auth Tag
     """
 

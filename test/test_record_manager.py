@@ -39,3 +39,15 @@ class TestRecordManager(unittest.TestCase):
         message_header = RecordManager.get_message_header(RecordHeaderType.HANDSHAKE, message, TLSVersion.V1_0)
         expected_message_header = bytes.fromhex("""16 03 01 00 c4""")
         self.assertEqual(message_header, expected_message_header)
+
+    def test_should_return_encrypted_record(self):
+        # server handshake key
+        key = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
+        # server handshake iv
+        nonce = bytes.fromhex("""9563bc8b590f671f488d2da3""")
+        # encrypted extensions
+        data = bytes.fromhex("""08 00 00 02 00 00""")
+        encrypted_record = RecordManager().get_encrypted_record(TLSVersion.V1_2, RecordHeaderType.APPLICATION_DATA, RecordHeaderType.HANDSHAKE, data, key, nonce)
+        print(binascii.hexlify(encrypted_record))
+        expected_encrypted_record = bytes.fromhex("""17 03 03 00 17 6b e0 2f 9d a7 c2 dc 9d de f5 6f 24 68 b9 0a df a2 51 01 ab 03 44 ae""")
+        self.assertEqual(encrypted_record, expected_encrypted_record)
