@@ -32,3 +32,13 @@ class CertificateVerifyMessage:
             )
 
             return signature
+
+    def get_certificate_verify_message(self, handshake_hash):
+        RSA_PSS_RSAE_SHA256_signature = b'\x08\x04'
+
+        signature = self.get_signature(handshake_hash)
+        signature_len = len(signature).to_bytes(2)
+
+        return RSA_PSS_RSAE_SHA256_signature + \
+            signature_len + \
+            signature
