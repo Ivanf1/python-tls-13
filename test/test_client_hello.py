@@ -1,3 +1,4 @@
+import binascii
 import unittest
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -87,4 +88,12 @@ class TestClientHello(unittest.TestCase):
         expected_client_hello_message_header = bytes.fromhex("""01 00 00 c0""")
         self.assertEqual(client_hello_message_header, expected_client_hello_message_header)
 
-
+    def test_should_return_extensions_list(self):
+        private_key = X25519PrivateKey.generate()
+        public_key = private_key.public_key()
+        c = ClientHello("example.ulfheim.net", public_key)
+        extensions_list = c.get_extensions_list()
+        expected_extensions_list = bytes.fromhex("""00 54 00 00 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 75 6c 66 
+            68 65 69 6d 2e 6e 65 74 00 0a 00 02 00 1d 00 0d 00 02 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20""") \
+            + c.public_key.public_bytes_raw()
+        self.assertEqual(extensions_list, expected_extensions_list)

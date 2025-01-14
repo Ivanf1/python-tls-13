@@ -50,6 +50,23 @@ class ClientHello:
 
         return self.__build_key_share(key_share_flag)
 
+    def get_extensions_list(self):
+        """
+        Concatenates all the Extensions supported by this ClientHello and prefixes the result
+        with 2 bytes representing its length.
+        :return: the list of Extensions complete with the prefix of 2 bytes representing its length
+        """
+
+        extensions = self.get_extension_server_name_extension() + \
+                     self.get_supported_groups_extension() + \
+                     self.get_signature_algorithms_extension() + \
+                     self.get_supported_versions_extension() + \
+                     self.get_key_share_extension()
+
+        extensions_len = len(extensions)
+        extensions_len_bytes = extensions_len.to_bytes(2)
+        return extensions_len_bytes + extensions
+
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
         # Each extension starts with a flag indicating the type of extension which has a length of 2 bytes.
