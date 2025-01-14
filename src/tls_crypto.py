@@ -25,6 +25,9 @@ def get_empty_hash_256():
 def get_hash_sha256(data):
     return hashlib.sha256(data).digest()
 
+def get_hmac_sha256(message, secret_key):
+    return hmac.new(secret_key, message, hashlib.sha256).digest()
+
 def hkdf_extract(input_keying_material, salt):
     """
     Perform HKDF-Extract.

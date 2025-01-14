@@ -1,3 +1,4 @@
+import binascii
 import unittest
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
@@ -6,7 +7,7 @@ from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_z
     get_server_handshake_key, \
     get_client_handshake_iv, get_server_handshake_iv, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_server_application_key, get_client_application_iv, \
-    get_server_application_iv, get_finished_secret, get_hash_sha256
+    get_server_application_iv, get_finished_secret, get_hash_sha256, get_hmac_sha256
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -73,6 +74,15 @@ class TestTLSCrypto(unittest.TestCase):
         expected_hash_sha256 = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
          d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
         self.assertEqual(hash_sha256, expected_hash_sha256)
+
+    def test_should_return_hmac_hash_sha256(self):
+        message = bytes.fromhex("""edb7725fa7a3473b031ec8ef65a2485493900138a2b91291407d7951a06110ed""")
+        secret_key = bytes.fromhex("""00 8d 3b 66 f8 16 ea 55 9f 96 b5 37 e8 85
+                    c3 1f c0 68 bf 49 2c 65 2f 01 f2 88 a1 d8 cd c1 9f c8""")
+        hmac_sha256 = get_hmac_sha256(message, secret_key)
+        expected_hmac_sha256 = bytes.fromhex("""9b 9b 14 1d 90 63 37 fb d2 cb dc e7 1d f4
+                de da 4a b4 2c 30 95 72 cb 7f ff ee 54 54 b7 8f 07 18""")
+        self.assertEqual(hmac_sha256, expected_hmac_sha256)
 
     def test_should_perform_hkdf_expand_label(self):
         secret = bytes.fromhex("""33 ad 0a 1c 60 7e c0 3b 09 e6 cd 98 93 68 0c
