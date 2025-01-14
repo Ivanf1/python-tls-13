@@ -6,7 +6,7 @@ from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_z
     get_server_handshake_key, \
     get_client_handshake_iv, get_server_handshake_iv, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_server_application_key, get_client_application_iv, \
-    get_server_application_iv
+    get_server_application_iv, get_finished_secret
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -189,6 +189,14 @@ class TestTLSCrypto(unittest.TestCase):
         expected_derived_secret = bytes.fromhex("""43 de 77 e0 c7 77 13 85 9a 94 4d b9 db 25 90 b5
          31 90 a6 5b 3e e2 e4 f1 2d d7 a0 bb 7c e2 54 b4""")
         self.assertEqual(derived_secret, expected_derived_secret)
+
+    def test_should_return_finished_secret(self):
+        server_secret = bytes.fromhex("""b6 7b 7d 69 0c c1 6c 4e 75 e5 42 13 cb 2d
+         37 b4 e9 c9 12 bc de d9 10 5d 42 be fd 59 d3 91 ad 38""")
+        finished_secret = get_finished_secret(server_secret)
+        expected_finished_secret = bytes.fromhex("""00 8d 3b 66 f8 16 ea 55 9f 96 b5 37 e8 85
+         c3 1f c0 68 bf 49 2c 65 2f 01 f2 88 a1 d8 cd c1 9f c8""")
+        self.assertEqual(finished_secret, expected_finished_secret)
 
     # https://datatracker.ietf.org/doc/html/rfc8448#page-6
     # section: {server}  extract secret "master"

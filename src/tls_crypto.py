@@ -120,6 +120,11 @@ def get_server_handshake_iv(server_secret):
     ctx = b''
     return hkdf_expand_label(server_secret, label, ctx, 12)
 
+def get_finished_secret(server_secret_handshake):
+    label = b'finished'
+    ctx = b''
+    return hkdf_expand_label(server_secret_handshake, label, ctx, 32)
+
 def get_master_secret(derived_secret):
     """
     Calculates the master secret by performing HKDF-Extract
