@@ -6,7 +6,7 @@ from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_z
     get_server_handshake_key, \
     get_client_handshake_iv, get_server_handshake_iv, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_server_application_key, get_client_application_iv, \
-    get_server_application_iv, get_finished_secret
+    get_server_application_iv, get_finished_secret, get_hash_sha256
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -54,6 +54,25 @@ class TestTLSCrypto(unittest.TestCase):
         expected_empty_hash = bytes.fromhex("""e3 b0 c4 42 98 fc 1c 14 9a fb f4 c8 99 6f b9 24
          27 ae 41 e4 64 9b 93 4c a4 95 99 1b 78 52 b8 55""")
         self.assertEqual(empty_hash, expected_empty_hash)
+
+    def test_should_return_hash_sha256(self):
+        hash_sha256 = get_hash_sha256(bytes.fromhex("""01 00 00 c0 03 03 cb 34 ec b1 e7 81 63
+         ba 1c 38 c6 da cb 19 6a 6d ff a2 1a 8d 99 12 ec 18 a2 ef 62 83
+         02 4d ec e7 00 00 06 13 01 13 03 13 02 01 00 00 91 00 00 00 0b
+         00 09 00 00 06 73 65 72 76 65 72 ff 01 00 01 00 00 0a 00 14 00
+         12 00 1d 00 17 00 18 00 19 01 00 01 01 01 02 01 03 01 04 00 23
+         00 00 00 33 00 26 00 24 00 1d 00 20 99 38 1d e5 60 e4 bd 43 d2
+         3d 8e 43 5a 7d ba fe b3 c0 6e 51 c1 3c ae 4d 54 13 69 1e 52 9a
+         af 2c 00 2b 00 03 02 03 04 00 0d 00 20 00 1e 04 03 05 03 06 03
+         02 03 08 04 08 05 08 06 04 01 05 01 06 01 02 01 04 02 05 02 06
+         02 02 02 00 2d 00 02 01 01 00 1c 00 02 40 01 02 00 00 56 03 03 a6 af 06 a4 12 18 60 dc 5e
+         6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e d3 e2
+         69 28 00 13 01 00 00 2e 00 33 00 24 00 1d 00 20 c9 82 88 76 11
+         20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 3b 83 3d f1 dd 69
+         b1 b0 4e 75 1f 0f 00 2b 00 02 03 04"""))
+        expected_hash_sha256 = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
+         d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
+        self.assertEqual(hash_sha256, expected_hash_sha256)
 
     def test_should_perform_hkdf_expand_label(self):
         secret = bytes.fromhex("""33 ad 0a 1c 60 7e c0 3b 09 e6 cd 98 93 68 0c

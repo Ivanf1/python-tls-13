@@ -22,6 +22,9 @@ def get_32_zero_bytes():
 def get_empty_hash_256():
     return hashlib.sha256().digest()
 
+def get_hash_sha256(data):
+    return hashlib.sha256(data).digest()
+
 def hkdf_extract(input_keying_material, salt):
     """
     Perform HKDF-Extract.
