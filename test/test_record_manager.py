@@ -1,6 +1,8 @@
+import binascii
 import unittest
 
 from src.record_manager import RecordManager, RecordHeaderType
+from src.utils import TLSVersion
 
 
 class TestRecordManager(unittest.TestCase):
@@ -17,7 +19,7 @@ class TestRecordManager(unittest.TestCase):
          af 2c 00 2b 00 03 02 03 04 00 0d 00 20 00 1e 04 03 05 03 06 03
          02 03 08 04 08 05 08 06 04 01 05 01 06 01 02 01 04 02 05 02 06
          02 02 02 00 2d 00 02 01 01 00 1c 00 02 40 01""")
-        message_header = RecordManager.get_message_header(RecordHeaderType.HANDSHAKE, RecordHeaderType.HANDSHAKE, message)
+        message_header = RecordManager.get_message_header(RecordHeaderType.HANDSHAKE, message, TLSVersion.V1_0)
         expected_message_header = bytes.fromhex("""16 03 01 00 c4""")
         self.assertEqual(message_header, expected_message_header)
 
@@ -34,6 +36,6 @@ class TestRecordManager(unittest.TestCase):
          af 2c 00 2b 00 03 02 03 04 00 0d 00 20 00 1e 04 03 05 03 06 03
          02 03 08 04 08 05 08 06 04 01 05 01 06 01 02 01 04 02 05 02 06
          02 02 02 00 2d 00 02 01 01 00 1c 00 02 40 01""")
-        message_header = RecordManager.get_message_header(RecordHeaderType.APPLICATION_DATA, RecordHeaderType.HANDSHAKE, message)
-        expected_message_header = bytes.fromhex("""17 03 01 00 c4""")
+        message_header = RecordManager.get_message_header(RecordHeaderType.HANDSHAKE, message, TLSVersion.V1_0)
+        expected_message_header = bytes.fromhex("""16 03 01 00 c4""")
         self.assertEqual(message_header, expected_message_header)

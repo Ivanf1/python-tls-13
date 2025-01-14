@@ -313,6 +313,6 @@ class TestTLSCrypto(unittest.TestCase):
         # record header
         aad = bytes.fromhex("""17 03 03 00 17""")
 
-        encrypted_data = encrypt(key, nonce, data, aad, RecordHeaderType.HANDSHAKE)
+        encrypted_data = encrypt(key, nonce, data, aad)
         expected_encrypted_data = bytes.fromhex("""6b e0 2f 9d a7 c2 dc 9d de f5 6f 24 68 b9 0a df a2 51 01 ab 03 44 ae""")
         self.assertEqual(encrypted_data, expected_encrypted_data)
