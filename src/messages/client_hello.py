@@ -4,9 +4,16 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 class ClientHello:
     def __init__(self, server_name, public_key: X25519PublicKey):
         self.CLIENT_VERSION = b'\x03\x03'
+        self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO = b'\x01'
         self.client_random = get_32_random_bytes()
         self.server_name = server_name
         self.public_key = public_key
+
+    def get_message_header(self, data):
+        # ClientHello message starts with a type and a length
+        data_len = len(data)
+        data_len_bytes = data_len.to_bytes(3, byteorder='big')
+        return self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO + data_len_bytes
 
     @staticmethod
     def get_supported_cipher_suites():
