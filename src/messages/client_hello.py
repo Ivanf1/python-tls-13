@@ -67,6 +67,14 @@ class ClientHello:
         extensions_len_bytes = extensions_len.to_bytes(2)
         return extensions_len_bytes + extensions
 
+    def build_client_hello(self):
+        m = self.CLIENT_VERSION + \
+            self.client_random + \
+            self.get_supported_cipher_suites() + \
+            self.get_extensions_list()
+
+        return self.get_message_header(m) + m
+
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
         # Each extension starts with a flag indicating the type of extension which has a length of 2 bytes.

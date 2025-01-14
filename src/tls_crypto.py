@@ -176,4 +176,3 @@ def get_server_application_iv(server_secret):
     label = b'iv'
     ctx = b''
     return hkdf_expand_label(server_secret, label, ctx, 12)
-

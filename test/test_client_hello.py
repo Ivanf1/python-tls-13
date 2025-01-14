@@ -1,5 +1,6 @@
 import binascii
 import unittest
+from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
@@ -97,3 +98,20 @@ class TestClientHello(unittest.TestCase):
             68 65 69 6d 2e 6e 65 74 00 0a 00 02 00 1d 00 0d 00 02 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20""") \
             + c.public_key.public_bytes_raw()
         self.assertEqual(extensions_list, expected_extensions_list)
+
+    @patch("secrets.token_bytes")
+    def test_should_return_client_hello_message(self, mock_get_32_random_bytes):
+        mock_random_bytes = b'\x00' * 32
+        mock_get_32_random_bytes.return_value = mock_random_bytes
+
+        private_key = X25519PrivateKey.generate()
+        public_key = private_key.public_key()
+        c = ClientHello("example.ulfheim.net", public_key)
+
+        client_hello_message = c.build_client_hello()
+
+        expected_client_hello_message = bytes.fromhex(
+            """0100007c03030000000000000000000000000000000000000000000000000000000000000000000213010054000000160000136578616d706c652e756c666865696d2e6e6574000a0002001d000d00020403002b0002030400330024001d0020"""
+        ) + public_key.public_bytes_raw()
+        self.assertEqual(client_hello_message, expected_client_hello_message)
+
