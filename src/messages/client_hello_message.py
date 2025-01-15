@@ -27,3 +27,6 @@ class ClientHelloMessage:
             self.extension_signature_algorithms + \
             self.extension_supported_versions + \
             self.extension_key_share
+
+    def get_server_name(self):
+        return self.extension_server_name[7:].decode("utf-8")
