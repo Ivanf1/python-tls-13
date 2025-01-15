@@ -1,7 +1,7 @@
 from src.tls_crypto import get_hmac_sha256
 
 
-class HandshakeFinished:
+class HandshakeFinishedMessageBuilder:
     def __init__(self):
         self.HANDSHAKE_MESSAGE_TYPE_FINISHED = b'\x14'
 

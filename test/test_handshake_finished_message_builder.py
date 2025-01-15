@@ -1,11 +1,11 @@
 import unittest
 
-from src.messages.handshake_finished import HandshakeFinished
+from src.messages.handshake_finished_message_builder import HandshakeFinishedMessageBuilder
 
 
 class TestHandshakeFinished(unittest.TestCase):
     def test_should_return_verify_data(self):
-        handshake_finished = HandshakeFinished()
+        handshake_finished = HandshakeFinishedMessageBuilder()
         finished_key = bytes.fromhex("""00 8d 3b 66 f8 16 ea 55 9f 96 b5 37 e8 85
                     c3 1f c0 68 bf 49 2c 65 2f 01 f2 88 a1 d8 cd c1 9f c8""")
         finished_hash = bytes.fromhex("""edb7725fa7a3473b031ec8ef65a2485493900138a2b91291407d7951a06110ed""")
@@ -15,7 +15,7 @@ class TestHandshakeFinished(unittest.TestCase):
         self.assertEqual(verify_data, expected_verify_data)
 
     def test_should_return_handshake_finished(self):
-        handshake_finished = HandshakeFinished()
+        handshake_finished = HandshakeFinishedMessageBuilder()
         finished_key = bytes.fromhex("""00 8d 3b 66 f8 16 ea 55 9f 96 b5 37 e8 85
                     c3 1f c0 68 bf 49 2c 65 2f 01 f2 88 a1 d8 cd c1 9f c8""")
         finished_hash = bytes.fromhex("""edb7725fa7a3473b031ec8ef65a2485493900138a2b91291407d7951a06110ed""")
