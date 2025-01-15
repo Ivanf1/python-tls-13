@@ -15,3 +15,6 @@ class KeyExchangeGroups(Enum):
 
 class SignatureAlgorithms(Enum):
     RSA_PSS_PSS_SHA256 = b'\x08\x09'
+
+class CipherSuites(Enum):
+    TLS_AES_128_GCM_SHA256 = b'\x13\x01'

@@ -2,9 +2,11 @@ from src.messages.client_hello_message import ClientHelloMessage
 from src.tls_crypto import get_32_random_bytes
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
+from src.utils import TLSVersion, SignatureAlgorithms, CipherSuites, KeyExchangeGroups
+
+
 class ClientHelloBuilder:
     def __init__(self, server_name, public_key: X25519PublicKey):
-        self.CLIENT_VERSION = b'\x03\x03'
         self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO = b'\x01'
         self.client_random = get_32_random_bytes()
         self.server_name = server_name
@@ -21,8 +23,7 @@ class ClientHelloBuilder:
         """
         Only support TLS_AES_128_GCM_SHA256
         """
-        TLS_AES_128_GCM_SHA256 = b'\x13\x01'
-        return len(TLS_AES_128_GCM_SHA256).to_bytes(2) + TLS_AES_128_GCM_SHA256
+        return len(CipherSuites.TLS_AES_128_GCM_SHA256.value).to_bytes(2) + CipherSuites.TLS_AES_128_GCM_SHA256.value
 
     def get_extension_server_name_extension(self):
         server_name_extension_flag = b'\x00\x00'
@@ -30,20 +31,17 @@ class ClientHelloBuilder:
 
     def get_supported_groups_extension(self):
         supported_groups_extension_flag = b'\x00\x0a'
-        group_x25519 = b'\x00\x1d'
-        return self.__build_extension(supported_groups_extension_flag, group_x25519)
+        return self.__build_extension(supported_groups_extension_flag, KeyExchangeGroups.x25519.value)
 
     def get_signature_algorithms_extension(self):
         # assigned value for extension "signature algorithms"
         supported_signature_algorithms_flag = b'\x00\x0d'
-        algorithm_ECDSA_SECP256r1_SHA256 =  b'\x04\x03'
-        return self.__build_extension(supported_signature_algorithms_flag, algorithm_ECDSA_SECP256r1_SHA256)
+        return self.__build_extension(supported_signature_algorithms_flag, SignatureAlgorithms.RSA_PSS_PSS_SHA256.value)
 
     def get_supported_versions_extension(self):
         # assigned value for extension "supported versions"
         supported_versions_flag = b'\x00\x2b'
-        tls_13 = b'\x03\x04'
-        return self.__build_extension(supported_versions_flag, tls_13)
+        return self.__build_extension(supported_versions_flag, TLSVersion.V1_3.value)
 
     def get_key_share_extension(self):
         # 1 -- assigned value for extension "key share"
@@ -70,7 +68,7 @@ class ClientHelloBuilder:
 
     def build_client_hello_message(self):
         hello_data = (
-            self.CLIENT_VERSION,
+            TLSVersion.V1_2.value,
             self.client_random,
             self.get_supported_cipher_suites(),
         )
@@ -112,10 +110,12 @@ class ClientHelloBuilder:
         return list_entry_type_dns_hostname + encoded_server_hostname_len_bytes + encoded_server_hostname
 
     def __build_key_share(self, flag):
-        curve_25519_flag = b'\x00\x1d'
-
         public_key_len_bytes = len(self.public_key.public_bytes_raw()).to_bytes(2)
 
         key_share_data_len_bytes = (len(self.public_key.public_bytes_raw()) + 2 + 2).to_bytes(2)
 
-        return flag + key_share_data_len_bytes + curve_25519_flag + public_key_len_bytes + self.public_key.public_bytes_raw()
+        return flag + \
+            key_share_data_len_bytes + \
+            KeyExchangeGroups.x25519.value + \
+            public_key_len_bytes + \
+            self.public_key.public_bytes_raw()
