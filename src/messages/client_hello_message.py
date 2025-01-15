@@ -33,6 +33,18 @@ class ClientHelloMessage:
     def get_server_name(self):
         return self.extension_server_name[7:].decode("utf-8")
 
+    def get_supported_groups(self):
+        return self.__get_extension_data(self.extension_supported_groups, KeyExchangeGroups)
+
+    def get_signature_algorithms(self):
+        return self.__get_extension_data(self.extension_signature_algorithms, SignatureAlgorithms)
+
+    def get_supported_versions(self):
+        return self.__get_extension_data(self.extension_supported_versions, TLSVersion)
+
+    def get_public_key(self):
+        return self.extension_key_share[8:]
+
     @staticmethod
     def __get_extension_data(extension, data_type):
         n_elements = int(int.from_bytes(extension[2:4]) / 2)
@@ -44,12 +56,3 @@ class ClientHelloMessage:
             data.append(data_type(p_data[i*2:(i*2)+2]))
 
         return data
-
-    def get_supported_groups(self):
-        return self.__get_extension_data(self.extension_supported_groups, KeyExchangeGroups)
-
-    def get_signature_algorithms(self):
-        return self.__get_extension_data(self.extension_signature_algorithms, SignatureAlgorithms)
-
-    def get_supported_versions(self):
-        return self.__get_extension_data(self.extension_supported_versions, TLSVersion)

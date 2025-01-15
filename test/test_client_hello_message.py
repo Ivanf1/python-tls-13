@@ -55,3 +55,8 @@ class TestClientHelloMessage(unittest.TestCase):
         supported_versions = self.client_hello_message.get_supported_versions()
         expected_supported_versions = [TLSVersion.V1_3]
         self.assertEqual(supported_versions, expected_supported_versions)
+
+    def test_should_return_public_key(self):
+        public_key = self.client_hello_message.get_public_key()
+        expected_public_key = bytes.fromhex("9a4407c27730168200ff65701c0f3f812b12a01df51b630351230280618a4067")
+        self.assertEqual(public_key, expected_public_key)
