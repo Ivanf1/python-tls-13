@@ -206,3 +206,15 @@ def encrypt(key, nonce, data, aad):
     """
 
     return AESGCM(key).encrypt(nonce, data, aad)
+
+def decrypt(key, nonce, data, aad):
+    """
+    Decrypts the data.
+
+    :param key: handshake or application key
+    :param nonce: handshake iv or application iv
+    :param data: data to decrypt
+    :param aad: first 5 bytes of the message (record header)
+    :return: decrypted data
+    """
+    return AESGCM(key).decrypt(nonce, data, aad)
