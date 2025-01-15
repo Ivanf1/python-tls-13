@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.utils import KeyExchangeGroups
+from src.utils import KeyExchangeGroups, SignatureAlgorithms
 
 
 @dataclass
@@ -43,3 +43,14 @@ class ClientHelloMessage:
             groups.append(KeyExchangeGroups(groups_data[i*2:(i*2)+2]))
 
         return groups
+
+    def get_signature_algorithms(self):
+        number_of_signature_algorithms = int(int.from_bytes(self.extension_signature_algorithms[2:4]) / 2)
+        algorithms = []
+
+        algorithms_data = self.extension_signature_algorithms[4:]
+
+        for i in range(number_of_signature_algorithms):
+            algorithms.append(SignatureAlgorithms(algorithms_data[i*2:(i*2)+2]))
+
+        return algorithms

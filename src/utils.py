@@ -11,3 +11,6 @@ class TLSVersion(Enum):
 
 class KeyExchangeGroups(Enum):
     x25519 = b'\x00\x1d'
+
+class SignatureAlgorithms(Enum):
+    RSA_PSS_PSS_SHA256 = b'\x08\x09'
