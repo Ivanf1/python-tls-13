@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from src.utils import KeyExchangeGroups
+
 
 @dataclass
 class ClientHelloMessage:
@@ -30,3 +32,14 @@ class ClientHelloMessage:
 
     def get_server_name(self):
         return self.extension_server_name[7:].decode("utf-8")
+
+    def get_supported_groups(self):
+        number_of_supported_groups = int(int.from_bytes(self.extension_supported_groups[2:4]) / 2)
+        groups = []
+
+        groups_data = self.extension_supported_groups[4:]
+
+        for i in range(number_of_supported_groups):
+            groups.append(KeyExchangeGroups(groups_data[i*2:(i*2)+2]))
+
+        return groups

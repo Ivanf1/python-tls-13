@@ -1,6 +1,7 @@
 import unittest
 
 from src.messages.client_hello_message import ClientHelloMessage
+from src.utils import KeyExchangeGroups
 
 
 class TestClientHelloMessage(unittest.TestCase):
@@ -39,3 +40,8 @@ class TestClientHelloMessage(unittest.TestCase):
         server_name = self.client_hello_message.get_server_name()
         expected_server_name = "example.ulfheim.net"
         self.assertEqual(server_name, expected_server_name)
+
+    def test_should_return_supported_groups(self):
+        supported_groups = self.client_hello_message.get_supported_groups()
+        expected_supported_groups = [KeyExchangeGroups.x25519]
+        self.assertSequenceEqual(supported_groups, expected_supported_groups)
