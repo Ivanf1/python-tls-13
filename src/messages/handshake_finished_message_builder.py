@@ -1,3 +1,4 @@
+from src.messages.handshake_finished_message import HandshakeFinishedMessage
 from src.tls_crypto import get_hmac_sha256
 
 
@@ -12,4 +13,8 @@ class HandshakeFinishedMessageBuilder:
         verify_data = self.get_verify_data(finished_key, finished_hash)
         verify_data_len = len(verify_data).to_bytes(3)
 
-        return self.HANDSHAKE_MESSAGE_TYPE_FINISHED + verify_data_len + verify_data
+        return HandshakeFinishedMessage(
+            self.HANDSHAKE_MESSAGE_TYPE_FINISHED,
+            verify_data_len,
+            verify_data,
+        )

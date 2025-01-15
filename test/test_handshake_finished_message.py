@@ -1,6 +1,6 @@
 import unittest
 
-from src.handshake_finished_message import HandshakeFinishedMessage
+from src.messages.handshake_finished_message import HandshakeFinishedMessage
 
 
 class TestHandshakeFinishedMessage(unittest.TestCase):
