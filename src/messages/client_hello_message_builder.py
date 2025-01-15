@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from src.utils import TLSVersion, SignatureAlgorithms, CipherSuites, KeyExchangeGroups
 
 
-class ClientHelloBuilder:
+class ClientHelloMessageBuilder:
     def __init__(self, server_name, public_key: X25519PublicKey):
         self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO = b'\x01'
         self.client_random = get_32_random_bytes()

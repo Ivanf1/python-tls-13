@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
-from src.messages.client_hello_builder import ClientHelloBuilder
+from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.utils import TLSVersion
 
 
@@ -12,7 +12,7 @@ class TestClientHello(unittest.TestCase):
         self.private_key = X25519PrivateKey.generate()
         self.public_key = self.private_key.public_key()
 
-        self.client_hello = ClientHelloBuilder("example.ulfheim.net", self.public_key)
+        self.client_hello = ClientHelloMessageBuilder("example.ulfheim.net", self.public_key)
 
     def test_should_return_client_version_tls_12(self):
         expected_client_version = bytes.fromhex("""03 03""")
@@ -82,7 +82,7 @@ class TestClientHello(unittest.TestCase):
 
         private_key = X25519PrivateKey.generate()
         public_key = private_key.public_key()
-        c = ClientHelloBuilder("example.ulfheim.net", public_key)
+        c = ClientHelloMessageBuilder("example.ulfheim.net", public_key)
 
         client_hello_message = c.build_client_hello_message().to_bytes()
         expected_client_hello_message = bytes.fromhex(
