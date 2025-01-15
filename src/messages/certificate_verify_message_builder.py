@@ -2,6 +2,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 
+from src.messages.certificate_verify_message import CertificateVerifyMessage
 from src.utils import SignatureAlgorithms
 
 
@@ -38,8 +39,14 @@ class CertificateVerifyMessageBuilder:
 
     def get_certificate_verify_message(self, handshake_hash):
         signature = self.get_signature(handshake_hash)
-        signature_len = len(signature).to_bytes(2)
+        signature_len = len(signature)
 
-        return SignatureAlgorithms.RSA_PSS_RSAE_SHA256.value + \
-            signature_len + \
-            signature
+        payload_len = (signature_len + 2 + 2).to_bytes(3)
+
+        return CertificateVerifyMessage(
+            self.HANDSHAKE_MESSAGE_TYPE_CERTIFICATE_VERIFY,
+            payload_len,
+            SignatureAlgorithms.RSA_PSS_RSAE_SHA256.value,
+            signature_len.to_bytes(2),
+            signature,
+        )
