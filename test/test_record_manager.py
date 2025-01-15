@@ -48,6 +48,5 @@ class TestRecordManager(unittest.TestCase):
         # encrypted extensions
         data = bytes.fromhex("""08 00 00 02 00 00""")
         encrypted_record = RecordManager().get_encrypted_record(TLSVersion.V1_2, RecordHeaderType.APPLICATION_DATA, RecordHeaderType.HANDSHAKE, data, key, nonce)
-        print(binascii.hexlify(encrypted_record))
         expected_encrypted_record = bytes.fromhex("""17 03 03 00 17 6b e0 2f 9d a7 c2 dc 9d de f5 6f 24 68 b9 0a df a2 51 01 ab 03 44 ae""")
         self.assertEqual(encrypted_record, expected_encrypted_record)
