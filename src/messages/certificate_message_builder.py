@@ -1,3 +1,6 @@
+from src.messages.certificate_message import CertificateMessage
+
+
 class CertificateMessageBuilder:
     def __init__(self, certificate):
         self.HANDSHAKE_MESSAGE_TYPE_CERTIFICATE = b'\x0b'
@@ -28,9 +31,18 @@ class CertificateMessageBuilder:
             certificate_extensions
 
     def get_certificate_message(self):
-        certificate_payload = self.get_certificate_payload()
-        certificate_payload_len = len(certificate_payload).to_bytes(3)
+        certificate_length = len(self.certificate)
+        certificate_extensions = b'\x00\x00'
 
-        return self.HANDSHAKE_MESSAGE_TYPE_CERTIFICATE + \
-            certificate_payload_len + \
-            certificate_payload
+        certificates_length = len(certificate_length.to_bytes(3)) + len(self.certificate) + len(certificate_extensions)
+        payload_length = len(self.REQUEST_CONTEXT) + certificates_length + 3
+
+        return CertificateMessage(
+            self.HANDSHAKE_MESSAGE_TYPE_CERTIFICATE,
+            payload_length.to_bytes(3),
+            self.REQUEST_CONTEXT,
+            certificates_length.to_bytes(3),
+            certificate_length.to_bytes(3),
+            self.certificate,
+            certificate_extensions,
+        )

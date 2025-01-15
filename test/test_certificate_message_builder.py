@@ -61,7 +61,7 @@ class TestCertificateMessage(unittest.TestCase):
 
     # https://datatracker.ietf.org/doc/html/rfc8448#page-7
     # section: {server}  construct a Certificate handshake message
-    def test_should_return_certificate_message(self):
+    def test_should_return_certificate_message_new(self):
         certificate = bytes.fromhex("""30 82
          01 ac 30 82 01 15 a0 03 02 01 02 02 01 02 30 0d 06 09 2a 86 48
          86 f7 0d 01 01 0b 05 00 30 0e 31 0c 30 0a 06 03 55 04 03 13 03
@@ -85,7 +85,7 @@ class TestCertificateMessage(unittest.TestCase):
          1c 3b 84 e0 a8 b2 f7 59 40 9b a3 ea c9 d9 1d 40 2d cc 0c c8 f8
          96 12 29 ac 91 87 b4 2b 4d e1""")
         certificate_message = CertificateMessageBuilder(certificate)
-        message = certificate_message.get_certificate_message()
+        message = certificate_message.get_certificate_message().to_bytes()
         expected_message = bytes.fromhex("""0b 00 01 b9 00 00 01 b5 00 01 b0 30 82
          01 ac 30 82 01 15 a0 03 02 01 02 02 01 02 30 0d 06 09 2a 86 48
          86 f7 0d 01 01 0b 05 00 30 0e 31 0c 30 0a 06 03 55 04 03 13 03
