@@ -1,4 +1,4 @@
-from src.tls_crypto import encrypt
+from src.tls_crypto import encrypt, decrypt
 from src.utils import RecordHeaderType, TLSVersion
 
 
@@ -32,3 +32,7 @@ class RecordManager:
 
         header = self.get_message_header(record_type, message, tls_version)
         return header + encrypt(key, nonce, message, header)
+
+    @staticmethod
+    def get_decrypted_record_payload(record, key, nonce):
+        return decrypt(key, nonce, record[5:], record[:5])
