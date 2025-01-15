@@ -1,7 +1,8 @@
+from src.messages.client_hello_message import ClientHelloMessage
 from src.tls_crypto import get_32_random_bytes
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
-class ClientHello:
+class ClientHelloBuilder:
     def __init__(self, server_name, public_key: X25519PublicKey):
         self.CLIENT_VERSION = b'\x03\x03'
         self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO = b'\x01'
@@ -67,13 +68,30 @@ class ClientHello:
         extensions_len_bytes = extensions_len.to_bytes(2)
         return extensions_len_bytes + extensions
 
-    def build_client_hello(self):
-        m = self.CLIENT_VERSION + \
-            self.client_random + \
-            self.get_supported_cipher_suites() + \
-            self.get_extensions_list()
+    def build_client_hello_message(self):
+        hello_data = (
+            self.CLIENT_VERSION,
+            self.client_random,
+            self.get_supported_cipher_suites(),
+        )
+        extensions = (
+            self.get_extension_server_name_extension(),
+            self.get_supported_groups_extension(),
+            self.get_signature_algorithms_extension(),
+            self.get_supported_versions_extension(),
+            self.get_key_share_extension(),
+        )
+        extensions_len = len(b''.join(extensions))
+        # 2 is the number of bytes of extension_len
+        payload_len = len(b''.join(hello_data)) + extensions_len + 2
 
-        return self.get_message_header(m) + m
+        return ClientHelloMessage(
+            self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO,
+            payload_len.to_bytes(3),
+            *hello_data,
+            extensions_len.to_bytes(2),
+            *extensions
+        )
 
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)

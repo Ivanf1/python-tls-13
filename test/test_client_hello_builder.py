@@ -1,9 +1,10 @@
+import binascii
 import unittest
 from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
-from src.messages.client_hello import ClientHello
+from src.messages.client_hello_builder import ClientHelloBuilder
 
 
 class TestClientHello(unittest.TestCase):
@@ -11,7 +12,7 @@ class TestClientHello(unittest.TestCase):
         self.private_key = X25519PrivateKey.generate()
         self.public_key = self.private_key.public_key()
 
-        self.client_hello = ClientHello("example.ulfheim.net", self.public_key)
+        self.client_hello = ClientHelloBuilder("example.ulfheim.net", self.public_key)
 
     def test_should_return_client_version_tls_12(self):
         expected_client_version = bytes.fromhex("""03 03""")
@@ -81,12 +82,13 @@ class TestClientHello(unittest.TestCase):
 
         private_key = X25519PrivateKey.generate()
         public_key = private_key.public_key()
-        c = ClientHello("example.ulfheim.net", public_key)
+        c = ClientHelloBuilder("example.ulfheim.net", public_key)
 
-        client_hello_message = c.build_client_hello()
-
+        client_hello_message = c.build_client_hello_message().to_bytes()
         expected_client_hello_message = bytes.fromhex(
             """0100007c03030000000000000000000000000000000000000000000000000000000000000000000213010054000000160000136578616d706c652e756c666865696d2e6e6574000a0002001d000d00020403002b0002030400330024001d0020"""
         ) + c.public_key.public_bytes_raw()
+        print(binascii.hexlify(client_hello_message))
         self.assertEqual(client_hello_message, expected_client_hello_message)
+
 
