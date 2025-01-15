@@ -8,6 +8,7 @@ class RecordHeaderType(Enum):
 class TLSVersion(Enum):
     V1_0 = b'\x03\x01'
     V1_2 = b'\x03\x03'
+    V1_3 = b'\x03\x04'
 
 class KeyExchangeGroups(Enum):
     x25519 = b'\x00\x1d'

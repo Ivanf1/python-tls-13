@@ -1,7 +1,7 @@
 import unittest
 
 from src.messages.client_hello_message import ClientHelloMessage
-from src.utils import KeyExchangeGroups, SignatureAlgorithms
+from src.utils import KeyExchangeGroups, SignatureAlgorithms, TLSVersion
 
 
 class TestClientHelloMessage(unittest.TestCase):
@@ -50,3 +50,8 @@ class TestClientHelloMessage(unittest.TestCase):
         signature_algorithms = self.client_hello_message.get_signature_algorithms()
         expected_signature_algorithms = [SignatureAlgorithms.RSA_PSS_PSS_SHA256]
         self.assertSequenceEqual(signature_algorithms, expected_signature_algorithms)
+
+    def test_should_return_supported_versions(self):
+        supported_versions = self.client_hello_message.get_supported_versions()
+        expected_supported_versions = [TLSVersion.V1_3]
+        self.assertEqual(supported_versions, expected_supported_versions)

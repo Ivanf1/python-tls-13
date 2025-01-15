@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.utils import KeyExchangeGroups, SignatureAlgorithms
+from src.utils import KeyExchangeGroups, SignatureAlgorithms, TLSVersion
 
 
 @dataclass
@@ -50,3 +50,6 @@ class ClientHelloMessage:
 
     def get_signature_algorithms(self):
         return self.__get_extension_data(self.extension_signature_algorithms, SignatureAlgorithms)
+
+    def get_supported_versions(self):
+        return self.__get_extension_data(self.extension_supported_versions, TLSVersion)
