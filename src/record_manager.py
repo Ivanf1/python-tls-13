@@ -65,7 +65,7 @@ class RecordManager:
         if RecordHeaderType(record[0:1]) == RecordHeaderType.HANDSHAKE:
             return RecordHeaderType.HANDSHAKE
         else:
-            return RecordHeaderType(record[:-1])
+            return RecordHeaderType(record[-1:])
 
     @staticmethod
     def get_decrypted_record_payload(record, key, nonce):
