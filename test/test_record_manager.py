@@ -46,7 +46,7 @@ class TestRecordManager(unittest.TestCase):
         nonce = bytes.fromhex("""9563bc8b590f671f488d2da3""")
         # encrypted extensions
         data = bytes.fromhex("""08 00 00 02 00 00""")
-        encrypted_record = RecordManager().get_encrypted_record(TLSVersion.V1_2, RecordHeaderType.APPLICATION_DATA, RecordHeaderType.HANDSHAKE, data, key, nonce)
+        encrypted_record = RecordManager.get_encrypted_record(TLSVersion.V1_2, RecordHeaderType.APPLICATION_DATA, RecordHeaderType.HANDSHAKE, data, key, nonce)
         expected_encrypted_record = bytes.fromhex("""17 03 03 00 17 6b e0 2f 9d a7 c2 dc 9d de f5 6f 24 68 b9 0a df a2 51 01 ab 03 44 ae""")
         self.assertEqual(encrypted_record, expected_encrypted_record)
 
@@ -132,7 +132,7 @@ class TestRecordManager(unittest.TestCase):
          af 2c 00 2b 00 03 02 03 04 00 0d 00 20 00 1e 04 03 05 03 06 03
          02 03 08 04 08 05 08 06 04 01 05 01 06 01 02 01 04 02 05 02 06
          02 02 02 00 2d 00 02 01 01 00 1c 00 02 40 01""")
-        unencrypted_record = RecordManager().get_unencrypted_record(TLSVersion.V1_0, RecordHeaderType.HANDSHAKE, message)
+        unencrypted_record = RecordManager.get_unencrypted_record(TLSVersion.V1_0, RecordHeaderType.HANDSHAKE, message)
         expected_unencrypted_record = bytes.fromhex("""16 03 01 00 c4
          01 00 00 c0 03 03 cb 34 ec b1 e7 81 63
          ba 1c 38 c6 da cb 19 6a 6d ff a2 1a 8d 99 12 ec 18 a2 ef 62 83

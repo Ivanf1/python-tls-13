@@ -12,7 +12,6 @@ class TlsSession:
         self.public_key = get_X25519_public_key(self.private_key)
 
         self.client_hello: ClientHelloMessage or None = None
-        self.record_manager = RecordManager()
 
     def start(self) -> bytes:
         self.client_hello = ClientHelloMessageBuilder(
@@ -20,7 +19,7 @@ class TlsSession:
             self.public_key
         ).build_client_hello_message()
 
-        return self.record_manager.get_unencrypted_record(
+        return RecordManager.get_unencrypted_record(
             tls_version=TLSVersion.V1_0,
             record_type=RecordHeaderType.HANDSHAKE,
             message=self.client_hello.to_bytes()
