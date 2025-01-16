@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from src.fsm import FSMInvalidEventForStateError
 from src.tls_fsm import TlsFsm, TlsFsmState, TlsFsmEvent
@@ -17,8 +18,15 @@ class TestTlsFsm(unittest.TestCase):
         self.assertSequenceEqual(self.tls_fsm.get_events(), self.tls_events)
 
     def test_should_proceed_to_wait_server_hello_state(self):
-        self.tls_fsm.transition(self.tls_events[0])
-        self.assertEqual(self.tls_fsm.get_current_state(), self.tls_states[1])
+        self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
+        self.assertEqual(self.tls_fsm.get_current_state(), TlsFsmState.WAIT_SERVER_HELLO)
 
     def test_should_not_proceed_to_next_state_if_event_invalid_for_current_state(self):
-        self.assertRaises(FSMInvalidEventForStateError, self.tls_fsm.transition, self.tls_events[1])
+        self.assertRaises(FSMInvalidEventForStateError, self.tls_fsm.transition, TlsFsmEvent.SERVER_HELLO_RECEIVED)
+
+    def test_should_proceed_to_wait_certificate_state(self):
+        with patch.object(TlsFsm, "_on_server_hello_received", return_value=True):
+            fsm = TlsFsm()
+            fsm.transition(TlsFsmEvent.SESSION_BEGIN)
+            fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+            self.assertEqual(fsm.get_current_state(), TlsFsmState.WAIT_CERTIFICATE)
