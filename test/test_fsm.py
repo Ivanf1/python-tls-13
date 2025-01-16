@@ -20,6 +20,9 @@ class TestFSM(unittest.TestCase):
 
         self.fsm = FSM(self.states, 'idle', self.transition_table)
 
+    def test_should_return_current_state(self):
+        self.assertEqual(self.fsm.get_current_state(), self.states[0])
+
     def test_should_proceed_to_start_state(self):
         self.start_processing.return_value = True
         self.fsm.transition(self.events[0])
