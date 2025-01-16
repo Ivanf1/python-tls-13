@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
-from src.fsm import FSM
+from src.fsm import FSM, FSMInvalidEventForStateError
 
 
 class TestFSM(unittest.TestCase):
@@ -25,3 +25,6 @@ class TestFSM(unittest.TestCase):
     def test_should_proceed_to_start_state(self):
         self.fsm.transition(self.events[0])
         self.assertEqual(self.fsm.current_state, self.states[1])
+
+    def test_should_raise_exception_on_invalid_event_for_current_state(self):
+        self.assertRaises(FSMInvalidEventForStateError, self.fsm.transition, self.events[1])
