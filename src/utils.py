@@ -5,6 +5,13 @@ class RecordHeaderType(Enum):
     HANDSHAKE = b'\x16'
     APPLICATION_DATA = b'\x17'
 
+class HandshakeMessageType(Enum):
+    CLIENT_HELLO = b'\x01'
+    SERVER_HELLO = b'\x02'
+    CERTIFICATE = b'\x0b'
+    CERTIFICATE_VERIFY = b'\x0f'
+    FINISHED = b'\x14'
+
 class TLSVersion(Enum):
     V1_0 = b'\x03\x01'
     V1_2 = b'\x03\x03'

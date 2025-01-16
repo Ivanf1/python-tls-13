@@ -1,5 +1,5 @@
 from src.tls_crypto import encrypt, decrypt
-from src.utils import RecordHeaderType, TLSVersion
+from src.utils import RecordHeaderType, TLSVersion, HandshakeMessageType
 
 
 class RecordManager:
@@ -66,6 +66,16 @@ class RecordManager:
             return RecordHeaderType.HANDSHAKE
         else:
             return RecordHeaderType(record[-1:])
+
+    @staticmethod
+    def get_handshake_message_type(record):
+        """
+        Return the type of the handshake message.
+
+        :param record: Decrypted record.
+        :return: The type of the handshake message.
+        """
+        return HandshakeMessageType(record[5:6])
 
     @staticmethod
     def get_decrypted_record_payload(record, key, nonce):
