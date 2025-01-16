@@ -39,3 +39,6 @@ class TlsFsm(FSM):
 
     def get_states(self):
         return self.states
+
+    def get_events(self):
+        return self.events
