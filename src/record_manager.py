@@ -53,5 +53,20 @@ class RecordManager:
         return record[0:5]
 
     @staticmethod
+    def get_record_type(record):
+        """
+        Returns the type of the record. In TLS 1.3 the type of the record may be different from the type indicated
+        in the record header if it is a handshake record being disguised as an application record.
+
+        :param record: Decrypted record.
+        :return: The type of the record. If the record is a handshake record being disguised as an application
+        record, it will return type handshake.
+        """
+        if RecordHeaderType(record[0:1]) == RecordHeaderType.HANDSHAKE:
+            return RecordHeaderType.HANDSHAKE
+        else:
+            return RecordHeaderType(record[:-1])
+
+    @staticmethod
     def get_decrypted_record_payload(record, key, nonce):
         return decrypt(key, nonce, record[5:], record[:5])
