@@ -25,7 +25,7 @@ class TlsFsm(FSM):
         self.events = [event for event in TlsFsmEvent]
 
         tls_table = {
-            (TlsFsmState.START, TlsFsmEvent.SESSION_BEGIN): (TlsFsmState.WAIT_SERVER_HELLO, self._on_session_begin())
+            (TlsFsmState.START, TlsFsmEvent.SESSION_BEGIN): (TlsFsmState.WAIT_SERVER_HELLO, self._on_session_begin)
         }
 
         super().__init__(
@@ -35,7 +35,7 @@ class TlsFsm(FSM):
         )
 
     def _on_session_begin(self):
-        pass
+        return True
 
     def get_states(self):
         return self.states
