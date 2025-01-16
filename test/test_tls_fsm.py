@@ -30,3 +30,12 @@ class TestTlsFsm(unittest.TestCase):
             fsm.transition(TlsFsmEvent.SESSION_BEGIN)
             fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
             self.assertEqual(fsm.get_current_state(), TlsFsmState.WAIT_CERTIFICATE)
+
+    def test_should_proceed_to_wait_certificate_verify_state(self):
+        with patch.object(TlsFsm, "_on_server_hello_received", return_value=True), \
+                patch.object(TlsFsm, "_on_certificate_received", return_value=True):
+            fsm = TlsFsm()
+            fsm.transition(TlsFsmEvent.SESSION_BEGIN)
+            fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+            fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED)
+            self.assertEqual(fsm.get_current_state(), TlsFsmState.WAIT_CERTIFICATE_VERIFY)
