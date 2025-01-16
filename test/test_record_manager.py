@@ -212,3 +212,8 @@ class TestRecordManager(unittest.TestCase):
             30 95 72 cb 7f ff ee 54 54 b7 8f 07 18 16""")
         record_type = RecordManager.get_record_type(decrypted_record)
         self.assertEqual(record_type, RecordHeaderType.HANDSHAKE)
+
+    def test_should_return_record_type_when_application_not_disguised(self):
+        decrypted_record = bytes.fromhex("""17 03 03 00 15 70 6f 6e 67 17""")
+        record_type = RecordManager.get_record_type(decrypted_record)
+        self.assertEqual(record_type, RecordHeaderType.APPLICATION_DATA)
