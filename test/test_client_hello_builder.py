@@ -3,7 +3,8 @@ from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
-from src.messages.client_hello import ClientHello
+from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
+from src.utils import TLSVersion
 
 
 class TestClientHello(unittest.TestCase):
@@ -11,11 +12,11 @@ class TestClientHello(unittest.TestCase):
         self.private_key = X25519PrivateKey.generate()
         self.public_key = self.private_key.public_key()
 
-        self.client_hello = ClientHello("example.ulfheim.net", self.public_key)
+        self.client_hello = ClientHelloMessageBuilder("example.ulfheim.net", self.public_key)
 
     def test_should_return_client_version_tls_12(self):
         expected_client_version = bytes.fromhex("""03 03""")
-        self.assertEqual(self.client_hello.CLIENT_VERSION, expected_client_version)
+        self.assertEqual(TLSVersion.V1_2.value, expected_client_version)
 
     def test_should_return_client_random(self):
         self.assertIs(len(self.client_hello.client_random), 32)
@@ -38,7 +39,7 @@ class TestClientHello(unittest.TestCase):
 
     def test_should_return_signature_algorithms_extension(self):
         signature_algorithms_extension = self.client_hello.get_signature_algorithms_extension()
-        expected_signature_algorithms_extension = bytes.fromhex("""00 0d 00 02 04 03""")
+        expected_signature_algorithms_extension = bytes.fromhex("""00 0d 00 02 08 09""")
         self.assertEqual(signature_algorithms_extension, expected_signature_algorithms_extension)
 
     def test_should_return_supported_versions_extension(self):
@@ -70,7 +71,7 @@ class TestClientHello(unittest.TestCase):
     def test_should_return_extensions_list(self):
         extensions_list = self.client_hello.get_extensions_list()
         expected_extensions_list = bytes.fromhex("""00 54 00 00 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 75 6c 66 
-            68 65 69 6d 2e 6e 65 74 00 0a 00 02 00 1d 00 0d 00 02 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20""") \
+            68 65 69 6d 2e 6e 65 74 00 0a 00 02 00 1d 00 0d 00 02 08 09 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20""") \
             + self.client_hello.public_key.public_bytes_raw()
         self.assertEqual(extensions_list, expected_extensions_list)
 
@@ -81,12 +82,12 @@ class TestClientHello(unittest.TestCase):
 
         private_key = X25519PrivateKey.generate()
         public_key = private_key.public_key()
-        c = ClientHello("example.ulfheim.net", public_key)
+        c = ClientHelloMessageBuilder("example.ulfheim.net", public_key)
 
-        client_hello_message = c.build_client_hello()
-
+        client_hello_message = c.build_client_hello_message().to_bytes()
         expected_client_hello_message = bytes.fromhex(
-            """0100007c03030000000000000000000000000000000000000000000000000000000000000000000213010054000000160000136578616d706c652e756c666865696d2e6e6574000a0002001d000d00020403002b0002030400330024001d0020"""
+            """0100007c03030000000000000000000000000000000000000000000000000000000000000000000213010054000000160000136578616d706c652e756c666865696d2e6e6574000a0002001d000d00020809002b0002030400330024001d0020"""
         ) + c.public_key.public_bytes_raw()
         self.assertEqual(client_hello_message, expected_client_hello_message)
+
 
