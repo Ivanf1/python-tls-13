@@ -1,5 +1,6 @@
 import unittest
 
+from src.fsm import FSMInvalidEventForStateError
 from src.tls_fsm import TlsFsm, TlsFsmState, TlsFsmEvent
 
 
@@ -18,3 +19,6 @@ class TestTlsFsm(unittest.TestCase):
     def test_should_proceed_to_wait_server_hello_state(self):
         self.tls_fsm.transition(self.tls_events[0])
         self.assertEqual(self.tls_fsm.get_current_state(), self.tls_states[1])
+
+    def test_should_not_proceed_to_next_state_if_event_invalid_for_current_state(self):
+        self.assertRaises(FSMInvalidEventForStateError, self.tls_fsm.transition, self.tls_events[1])
