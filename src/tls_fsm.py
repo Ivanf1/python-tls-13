@@ -28,6 +28,7 @@ class TlsFsm(FSM):
             (TlsFsmState.START, TlsFsmEvent.SESSION_BEGIN): (TlsFsmState.WAIT_SERVER_HELLO, self._on_session_begin),
             (TlsFsmState.WAIT_SERVER_HELLO, TlsFsmEvent.SERVER_HELLO_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE, self._on_server_hello_received),
             (TlsFsmState.WAIT_CERTIFICATE, TlsFsmEvent.CERTIFICATE_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE_VERIFY, self._on_certificate_received),
+            (TlsFsmState.WAIT_CERTIFICATE_VERIFY, TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED): (TlsFsmState.WAIT_FINISHED, self._on_certificate_verify_received),
         }
 
         super().__init__(
@@ -43,6 +44,9 @@ class TlsFsm(FSM):
         pass
 
     def _on_certificate_received(self):
+        pass
+
+    def _on_certificate_verify_received(self):
         pass
 
     def get_states(self):
