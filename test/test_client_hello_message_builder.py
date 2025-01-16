@@ -7,7 +7,7 @@ from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.utils import TLSVersion
 
 
-class TestClientHello(unittest.TestCase):
+class TestClientHelloMessageBuilder(unittest.TestCase):
     def setUp(self):
         self.private_key = X25519PrivateKey.generate()
         self.public_key = self.private_key.public_key()

@@ -3,18 +3,19 @@ from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
-from src.messages.server_hello import ServerHello
+from src.messages.server_hello_message_builder import ServerHelloMessageBuilder
+from src.utils import TLSVersion
 
-class TestServerHello(unittest.TestCase):
+class TestServerHelloMessageBuilder(unittest.TestCase):
     def setUp(self):
         self.private_key = X25519PrivateKey.generate()
         self.public_key = self.private_key.public_key()
 
-        self.server_hello = ServerHello(self.public_key)
+        self.server_hello = ServerHelloMessageBuilder(self.public_key)
 
     def test_should_return_server_version_tls_12(self):
         expected_server_version = bytes.fromhex("""03 03""")
-        self.assertEqual(self.server_hello.SERVER_VERSION, expected_server_version)
+        self.assertEqual(TLSVersion.V1_2.value, expected_server_version)
 
     def test_should_return_server_random(self):
         self.assertIs(len(self.server_hello.server_random), 32)
@@ -54,9 +55,9 @@ class TestServerHello(unittest.TestCase):
 
         private_key = X25519PrivateKey.generate()
         public_key = private_key.public_key()
-        s = ServerHello(public_key)
+        s = ServerHelloMessageBuilder(public_key)
 
-        server_hello_message = s.build_server_hello()
+        server_hello_message = s.build_server_hello_message().to_bytes()
 
         expected_server_hello_message = bytes.fromhex(
             """02000054030300000000000000000000000000000000000000000000000000000000000000001301002e002b0002030400330024001d0020"""
