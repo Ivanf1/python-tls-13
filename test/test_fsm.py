@@ -23,7 +23,7 @@ class TestFSM(unittest.TestCase):
     def test_should_proceed_to_start_state(self):
         self.start_processing.return_value = True
         self.fsm.transition(self.events[0])
-        self.assertEqual(self.fsm.current_state, self.states[1])
+        self.assertEqual(self.fsm.get_current_state(), self.states[1])
 
     def test_should_raise_exception_on_invalid_event_for_current_state(self):
         self.assertRaises(FSMInvalidEventForStateError, self.fsm.transition, self.events[1])
@@ -31,4 +31,4 @@ class TestFSM(unittest.TestCase):
     def test_should_not_proceed_to_start_when_callback_returns_false(self):
         self.start_processing.return_value = False
         self.fsm.transition(self.events[0])
-        self.assertEqual(self.fsm.current_state, self.states[0])
+        self.assertEqual(self.fsm.get_current_state(), self.states[0])
