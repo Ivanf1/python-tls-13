@@ -3,7 +3,7 @@ import unittest
 from src.messages.certificate_message_builder import CertificateMessageBuilder
 
 
-class TestCertificateMessage(unittest.TestCase):
+class TestCertificateMessageBuilder(unittest.TestCase):
     def test_should_return_request_context(self):
         certificate_message = CertificateMessageBuilder(b'')
         self.assertEqual(certificate_message.REQUEST_CONTEXT, b'\x00')

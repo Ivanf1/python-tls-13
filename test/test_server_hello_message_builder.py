@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 from src.messages.server_hello_message_builder import ServerHelloMessageBuilder
 from src.utils import TLSVersion
 
-class TestServerHello(unittest.TestCase):
+class TestServerHelloMessageBuilder(unittest.TestCase):
     def setUp(self):
         self.private_key = X25519PrivateKey.generate()
         self.public_key = self.private_key.public_key()
