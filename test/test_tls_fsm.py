@@ -50,3 +50,16 @@ class TestTlsFsm(unittest.TestCase):
             fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED)
             fsm.transition(TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED)
             self.assertEqual(fsm.get_current_state(), TlsFsmState.WAIT_FINISHED)
+
+    def test_should_proceed_to_connected_state(self):
+        with patch.object(TlsFsm, "_on_server_hello_received", return_value=True), \
+                patch.object(TlsFsm, "_on_certificate_received", return_value=True), \
+                patch.object(TlsFsm, "_on_certificate_verify_received", return_value=True), \
+                patch.object(TlsFsm, "_on_finished_received", return_value=True):
+            fsm = TlsFsm()
+            fsm.transition(TlsFsmEvent.SESSION_BEGIN)
+            fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+            fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED)
+            fsm.transition(TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED)
+            fsm.transition(TlsFsmEvent.FINISHED_RECEIVED)
+            self.assertEqual(fsm.get_current_state(), TlsFsmState.CONNECTED)
