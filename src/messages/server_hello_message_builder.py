@@ -1,9 +1,12 @@
+from src.messages.server_hello_message import ServerHelloMessage
 from src.tls_crypto import get_32_random_bytes
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
-class ServerHello:
+from src.utils import TLSVersion, CipherSuites, KeyExchangeGroups
+
+
+class ServerHelloMessageBuilder:
     def __init__(self, public_key: X25519PublicKey):
-        self.SERVER_VERSION = b'\x03\x03'
         self.HANDSHAKE_MESSAGE_TYPE_SERVER_HELLO = b'\x02'
         self.server_random = get_32_random_bytes()
         self.public_key = public_key
@@ -19,8 +22,7 @@ class ServerHello:
         """
         Only support TLS_AES_128_GCM_SHA256
         """
-        TLS_AES_128_GCM_SHA256 = b'\x13\x01'
-        return TLS_AES_128_GCM_SHA256
+        return CipherSuites.TLS_AES_128_GCM_SHA256.value
 
     def get_key_share_extension(self):
         # 1 -- assigned value for extension "key share"
@@ -31,8 +33,7 @@ class ServerHello:
     def get_supported_versions_extension(self):
         # assigned value for extension "supported versions"
         supported_versions_flag = b'\x00\x2b'
-        tls_13 = b'\x03\x04'
-        return self.__build_extension(supported_versions_flag, tls_13)
+        return self.__build_extension(supported_versions_flag, TLSVersion.V1_3.value)
 
     def get_extensions_list(self):
         """
@@ -48,13 +49,27 @@ class ServerHello:
         extensions_len_bytes = extensions_len.to_bytes(2)
         return extensions_len_bytes + extensions
 
-    def build_server_hello(self):
-        m = self.SERVER_VERSION + \
-            self.server_random + \
-            self.get_supported_cipher_suites() + \
-            self.get_extensions_list()
+    def build_server_hello_message(self):
+        hello_data = (
+            TLSVersion.V1_2.value,
+            self.server_random,
+            self.get_supported_cipher_suites(),
+        )
+        extensions = (
+            self.get_supported_versions_extension(),
+            self.get_key_share_extension(),
+        )
+        extensions_len = len(b''.join(extensions))
+        # 2 is the number of bytes of extension_len
+        payload_len = len(b''.join(hello_data)) + extensions_len + 2
 
-        return self.get_message_header(m) + m
+        return ServerHelloMessage(
+            self.HANDSHAKE_MESSAGE_TYPE_SERVER_HELLO,
+            payload_len.to_bytes(3),
+            *hello_data,
+            extensions_len.to_bytes(2),
+            *extensions
+        )
 
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
@@ -64,10 +79,12 @@ class ServerHello:
         return flag + data_bytes + data
 
     def __build_key_share(self, flag):
-        curve_25519_flag = b'\x00\x1d'
-
         public_key_len_bytes = len(self.public_key.public_bytes_raw()).to_bytes(2)
 
         key_share_data_len_bytes = (len(self.public_key.public_bytes_raw()) + 2 + 2).to_bytes(2)
 
-        return flag + key_share_data_len_bytes + curve_25519_flag + public_key_len_bytes + self.public_key.public_bytes_raw()
+        return flag + \
+            key_share_data_len_bytes + \
+            KeyExchangeGroups.x25519.value + \
+            public_key_len_bytes + \
+            self.public_key.public_bytes_raw()

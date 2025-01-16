@@ -3,7 +3,7 @@ import unittest
 from src.messages.handshake_finished_message_builder import HandshakeFinishedMessageBuilder
 
 
-class TestHandshakeFinished(unittest.TestCase):
+class TestHandshakeFinishedMessageBuilder(unittest.TestCase):
     def test_should_return_verify_data(self):
         handshake_finished = HandshakeFinishedMessageBuilder()
         finished_key = bytes.fromhex("""00 8d 3b 66 f8 16 ea 55 9f 96 b5 37 e8 85

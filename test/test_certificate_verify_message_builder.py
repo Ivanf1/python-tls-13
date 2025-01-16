@@ -3,7 +3,7 @@ import unittest
 from src.messages.certificate_verify_message_builder import CertificateVerifyMessageBuilder
 
 
-class TestCertificateVerifyMessage(unittest.TestCase):
+class TestCertificateVerifyMessageBuilder(unittest.TestCase):
     def test_should_return_signature(self):
         m = CertificateVerifyMessageBuilder(f"../test/data/private_key.pem")
         signature = m.get_signature(b'')
