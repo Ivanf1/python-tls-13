@@ -15,8 +15,21 @@ class RecordManager:
 
         return record_type.value + tls_version.value + message_len.to_bytes(2)
 
+    def get_unencrypted_record(self, tls_version: TLSVersion, record_type: RecordHeaderType, message):
+        """
+        Returns the record composed by the message itself and the header, with the payload in plaintext.
+
+        :param tls_version: the TLS version to be specified in the record header
+        :param record_type: the record type to be specified in the record header
+        :param message: the message to encrypt
+        :return: the encrypted record
+        """
+        header = self.get_message_header(record_type, message, tls_version)
+        return header + message
+
     def get_encrypted_record(self, tls_version: TLSVersion, record_type: RecordHeaderType, message_type: RecordHeaderType, message, key, nonce):
         """
+        Returns the record composed by the message and the header, with the payload encrypted.
 
         :param tls_version: the TLS version to be specified in the record header
         :param record_type: the record type to be specified in the record header
