@@ -35,3 +35,9 @@ class TestFSM(unittest.TestCase):
         self.start_processing.return_value = False
         self.fsm.transition(self.events[0])
         self.assertEqual(self.fsm.get_current_state(), self.states[0])
+
+    def test_should_call_callback_with_context(self):
+        self.start_processing.return_value = True
+        ctx = "context"
+        self.fsm.transition(self.events[0], ctx)
+        self.start_processing.assert_called_with(ctx)
