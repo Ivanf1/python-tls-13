@@ -27,6 +27,10 @@ def get_empty_hash_256():
 def get_hash_sha256(data):
     return hashlib.sha256(data).digest()
 
+def get_records_hash_sha256(*records):
+    data = b''.join([record[5:] for record in records])
+    return get_hash_sha256(data)
+
 def get_hmac_sha256(message, secret_key):
     return hmac.new(secret_key, message, hashlib.sha256).digest()
 
