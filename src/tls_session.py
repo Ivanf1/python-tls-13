@@ -1,9 +1,10 @@
 from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
+from src.messages.server_hello_message import ServerHelloMessage
 from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key
 from src.tls_fsm import TlsFsm, TlsFsmEvent
-from src.utils import TLSVersion, RecordHeaderType
+from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
 
 class TlsSession:
@@ -13,7 +14,15 @@ class TlsSession:
         self.public_key = get_X25519_public_key(self.private_key)
 
         self.client_hello: ClientHelloMessage or None = None
-        self.tls_fsm = TlsFsm()
+        self.server_hello: ServerHelloMessage or None = None
+
+        self.tls_fsm = TlsFsm(
+            on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
+            on_server_hello_received_cb=self._on_server_hello_received_fsm_transaction,
+            on_certificate_received_cb=self._on_certificate_received_fsm_transaction,
+            on_certificate_verify_received_cb=self._on_certificate_verify_received_fsm_transaction,
+            on_finished_received_cb=self._on_finished_received_fsm_transaction
+        )
 
     def start(self) -> bytes:
         self.client_hello = ClientHelloMessageBuilder(
@@ -23,8 +32,23 @@ class TlsSession:
 
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
 
-        return RecordManager.get_unencrypted_record(
+        return RecordManager.build_unencrypted_record(
             tls_version=TLSVersion.V1_0,
             record_type=RecordHeaderType.HANDSHAKE,
             message=self.client_hello.to_bytes()
         )
+
+    def _on_session_begin_fsm_transaction(self, ctx):
+        pass
+
+    def _on_server_hello_received_fsm_transaction(self, ctx):
+        pass
+
+    def _on_certificate_received_fsm_transaction(self, ctx):
+        pass
+
+    def _on_certificate_verify_received_fsm_transaction(self, ctx):
+        pass
+
+    def _on_finished_received_fsm_transaction(self, ctx):
+        pass
