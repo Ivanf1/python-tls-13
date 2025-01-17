@@ -1,3 +1,5 @@
+import binascii
+
 from src.messages.server_hello_message import ServerHelloMessage
 from src.tls_crypto import get_32_random_bytes
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey

@@ -1,5 +1,7 @@
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
+from src.messages.certificate_message import CertificateMessage
+from src.messages.certificate_message_builder import CertificateMessageBuilder
 from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
@@ -22,6 +24,7 @@ class TlsSession:
 
         self.client_hello: ClientHelloMessage or None = None
         self.server_hello: ServerHelloMessage or None = None
+        self.certificate_message: CertificateMessage or None = None
 
         self.tls_fsm = TlsFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
@@ -51,6 +54,8 @@ class TlsSession:
         match message_type:
             case HandshakeMessageType.SERVER_HELLO:
                 event = TlsFsmEvent.SERVER_HELLO_RECEIVED
+            case HandshakeMessageType.CERTIFICATE:
+                event = TlsFsmEvent.CERTIFICATE_RECEIVED
             case _:
                 event = None
 
@@ -74,7 +79,9 @@ class TlsSession:
         self.client_handshake_key = get_client_handshake_key(client_secret)
 
     def _on_certificate_received_fsm_transaction(self, ctx):
-        pass
+        # TODO: validate the certificate
+        self.certificate_message = CertificateMessageBuilder.build_from_bytes(ctx)
+        return True
 
     def _on_certificate_verify_received_fsm_transaction(self, ctx):
         pass
