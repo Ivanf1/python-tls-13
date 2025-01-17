@@ -2,6 +2,8 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
 from src.messages.certificate_message import CertificateMessage
 from src.messages.certificate_message_builder import CertificateMessageBuilder
+from src.messages.certificate_verify_message import CertificateVerifyMessage
+from src.messages.certificate_verify_message_builder import CertificateVerifyMessageBuilder
 from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
@@ -25,6 +27,7 @@ class TlsSession:
         self.client_hello: ClientHelloMessage or None = None
         self.server_hello: ServerHelloMessage or None = None
         self.certificate_message: CertificateMessage or None = None
+        self.certificate_verify_message: CertificateVerifyMessage or None = None
 
         self.tls_fsm = TlsFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
@@ -56,6 +59,8 @@ class TlsSession:
                 event = TlsFsmEvent.SERVER_HELLO_RECEIVED
             case HandshakeMessageType.CERTIFICATE:
                 event = TlsFsmEvent.CERTIFICATE_RECEIVED
+            case HandshakeMessageType.CERTIFICATE_VERIFY:
+                event = TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED
             case _:
                 event = None
 
@@ -77,6 +82,7 @@ class TlsSession:
 
         client_secret = get_client_secret_handshake(handshake_secret, hello_hash)
         self.client_handshake_key = get_client_handshake_key(client_secret)
+        return True
 
     def _on_certificate_received_fsm_transaction(self, ctx):
         # TODO: validate the certificate
@@ -84,7 +90,8 @@ class TlsSession:
         return True
 
     def _on_certificate_verify_received_fsm_transaction(self, ctx):
-        pass
+        self.certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx)
+        return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
         pass
