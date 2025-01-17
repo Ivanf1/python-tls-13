@@ -1,6 +1,7 @@
 from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
+from src.messages.server_hello_message_builder import ServerHelloMessageBuilder
 from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key
 from src.tls_fsm import TlsFsm, TlsFsmEvent
@@ -12,6 +13,8 @@ class TlsSession:
         self.server_name = server_name
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
+        self.server_random = None
+        self.server_public_key = None
 
         self.client_hello: ClientHelloMessage or None = None
         self.server_hello: ServerHelloMessage or None = None
@@ -37,6 +40,10 @@ class TlsSession:
             record_type=RecordHeaderType.HANDSHAKE,
             message=self.client_hello.to_bytes()
         )
+
+    def on_record_received(self, record):
+        message_type = RecordManager.get_handshake_message_type(record)
+        self.tls_fsm.transition(message_type, record)
 
     def _on_session_begin_fsm_transaction(self, ctx):
         pass
