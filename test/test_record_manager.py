@@ -174,7 +174,7 @@ class TestRecordManager(unittest.TestCase):
          af 2c 00 2b 00 03 02 03 04 00 0d 00 20 00 1e 04 03 05 03 06 03
          02 03 08 04 08 05 08 06 04 01 05 01 06 01 02 01 04 02 05 02 06
          02 02 02 00 2d 00 02 01 01 00 1c 00 02 40 01""")
-        record_type = RecordManager.get_record_type(record)
+        record_type = RecordManager.get_disguised_record_type(record)
         self.assertEqual(record_type, RecordHeaderType.HANDSHAKE)
 
     def test_should_return_record_type_handshake_when_record_disguised(self):
@@ -210,12 +210,12 @@ class TestRecordManager(unittest.TestCase):
             a5 04 3e 06 3d da 65 cd f5 ae a2 0d 53 df ac d4 2f 74 f3 14 00
             00 20 9b 9b 14 1d 90 63 37 fb d2 cb dc e7 1d f4 de da 4a b4 2c
             30 95 72 cb 7f ff ee 54 54 b7 8f 07 18 16""")
-        record_type = RecordManager.get_record_type(decrypted_record)
+        record_type = RecordManager.get_disguised_record_type(decrypted_record)
         self.assertEqual(record_type, RecordHeaderType.HANDSHAKE)
 
     def test_should_return_record_type_when_application_not_disguised(self):
         decrypted_record = bytes.fromhex("""17 03 03 00 15 70 6f 6e 67 17""")
-        record_type = RecordManager.get_record_type(decrypted_record)
+        record_type = RecordManager.get_disguised_record_type(decrypted_record)
         self.assertEqual(record_type, RecordHeaderType.APPLICATION_DATA)
 
     def test_should_return_handshake_message_type_client_hello(self):
@@ -237,3 +237,12 @@ class TestRecordManager(unittest.TestCase):
         20 9f d7 ad 6d cf f4 29 8d d3 f9 6d 5b 1b 2a f9 10 a0 53 5b 14 88 d7 f8 fa bb 34 9a 98 28 80 b6 15""")
         message_type = RecordManager.get_handshake_message_type(record)
         self.assertEqual(message_type, HandshakeMessageType.SERVER_HELLO)
+
+    def test_should_return_record_type(self):
+        record = bytes.fromhex("""16 03 03 00 7a 02 00 00 76 03 03 70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 
+        7f 80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f 20 e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ea eb ec ed ee ef 
+        f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff 13 02 00 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+        20 9f d7 ad 6d cf f4 29 8d d3 f9 6d 5b 1b 2a f9 10 a0 53 5b 14 88 d7 f8 fa bb 34 9a 98 28 80 b6 15""")
+        record_type = RecordManager.get_record_type(record)
+        self.assertEqual(record_type, RecordHeaderType.HANDSHAKE)
+

@@ -53,7 +53,16 @@ class RecordManager:
         return record[0:5]
 
     @staticmethod
-    def get_record_type(record):
+    def get_record_type(record: bytes) -> RecordHeaderType:
+        """
+
+        :param record: Encrypted record.
+        :return: The type of the encrypted record indicated in the header.
+        """
+        return RecordHeaderType(record[0:1])
+
+    @staticmethod
+    def get_disguised_record_type(record: bytes) -> RecordHeaderType:
         """
         Returns the type of the record. In TLS 1.3 the type of the record may be different from the type indicated
         in the record header if it is a handshake record being disguised as an application record.
