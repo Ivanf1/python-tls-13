@@ -71,6 +71,34 @@ class ServerHelloMessageBuilder:
             *extensions
         )
 
+    @staticmethod
+    def build_from_bytes(message_bytes: bytes):
+        """
+        Builds a ServerHelloMessage object from a byte representation of a server hello message.
+
+        :param message_bytes: The bytes of the message.
+        :return: ServerHelloMessage
+        """
+        handshake_message_type = message_bytes[0:1]
+        bytes_of_server_hello_data = message_bytes[1:4]
+        server_version = message_bytes[4:6]
+        server_random = message_bytes[6:38]
+        cipher_suites = message_bytes[38:40]
+        extensions_length = message_bytes[40:42]
+        extension_supported_versions = message_bytes[42:48]
+        extension_key_share = message_bytes[48:]
+
+        return ServerHelloMessage(
+            handshake_message_type=handshake_message_type,
+            bytes_of_server_hello_data=bytes_of_server_hello_data,
+            server_version=server_version,
+            server_random=server_random,
+            cipher_suites=cipher_suites,
+            extensions_length=extensions_length,
+            extension_supported_versions=extension_supported_versions,
+            extension_key_share=extension_key_share
+        )
+
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
         # Each extension starts with a flag indicating the type of extension which has a length of 2 bytes.

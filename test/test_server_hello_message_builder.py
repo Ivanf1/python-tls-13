@@ -63,3 +63,83 @@ class TestServerHelloMessageBuilder(unittest.TestCase):
             """02000054030300000000000000000000000000000000000000000000000000000000000000001301002e002b0002030400330024001d0020"""
         ) + s.public_key.public_bytes_raw()
         self.assertEqual(server_hello_message, expected_server_hello_message)
+
+    def test_should_build_server_hello_message_from_bytes_correct_handshake_message_type(self):
+        data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60
+         dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
+         d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+         20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 
+         3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
+        message = ServerHelloMessageBuilder.build_from_bytes(data)
+        expected_handshake_message_type = bytes.fromhex("02")
+        self.assertEqual(message.handshake_message_type, expected_handshake_message_type)
+
+    def test_should_build_server_hello_message_from_bytes_correct_bytes_of_server_hello_data(self):
+        data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60
+         dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
+         d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+         20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 
+         3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
+        message = ServerHelloMessageBuilder.build_from_bytes(data)
+        expected_bytes_of_server_hello_data = bytes.fromhex("00 00 56")
+        self.assertEqual(message.bytes_of_server_hello_data, expected_bytes_of_server_hello_data)
+
+    def test_should_build_server_hello_message_from_bytes_correct_server_version(self):
+        data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60
+         dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
+         d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+         20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 
+         3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
+        message = ServerHelloMessageBuilder.build_from_bytes(data)
+        expected_server_version = bytes.fromhex("03 03")
+        self.assertEqual(message.server_version, expected_server_version)
+
+    def test_should_build_server_hello_message_from_bytes_correct_server_random(self):
+        data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60
+         dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
+         d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+         20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 
+         3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
+        message = ServerHelloMessageBuilder.build_from_bytes(data)
+        expected_server_random = bytes.fromhex("a6af06a4121860dc5e6e60249cd34c95930c8ac5cb1434dac155772ed3e26928")
+        self.assertEqual(message.server_random, expected_server_random)
+
+    def test_should_build_server_hello_message_from_bytes_correct_cipher_suites(self):
+        data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60
+         dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
+         d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+         20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 
+         3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
+        message = ServerHelloMessageBuilder.build_from_bytes(data)
+        expected_cipher_suites = bytes.fromhex("13 01")
+        self.assertEqual(message.cipher_suites, expected_cipher_suites)
+
+    def test_should_build_server_hello_message_from_bytes_correct_extensions_length(self):
+        data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60
+         dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
+         d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+         20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 
+         3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
+        message = ServerHelloMessageBuilder.build_from_bytes(data)
+        expected_extensions_length = bytes.fromhex("00 2e")
+        self.assertEqual(message.extensions_length, expected_extensions_length)
+
+    def test_should_build_server_hello_message_from_bytes_correct_extension_supported_versions(self):
+        data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60
+         dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
+         d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+         20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 
+         3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
+        message = ServerHelloMessageBuilder.build_from_bytes(data)
+        expected_extension_supported_versions = bytes.fromhex("002b00020304")
+        self.assertEqual(message.extension_supported_versions, expected_extension_supported_versions)
+
+    def test_should_build_server_hello_message_from_bytes_correct_extension_key_share(self):
+        data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60
+         dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
+         d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
+         20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6 cc 25 
+         3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
+        message = ServerHelloMessageBuilder.build_from_bytes(data)
+        expected_extension_key_share = bytes.fromhex("00330024001d0020c9828876112095fe66762bdbf7c672e156d6cc253b833df1dd69b1b04e751f0f")
+        self.assertEqual(message.extension_key_share, expected_extension_key_share)
