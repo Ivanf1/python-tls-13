@@ -6,12 +6,15 @@ from src.messages.certificate_verify_message import CertificateVerifyMessage
 from src.messages.certificate_verify_message_builder import CertificateVerifyMessageBuilder
 from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
+from src.messages.handshake_finished_message import HandshakeFinishedMessage
+from src.messages.handshake_finished_message_builder import HandshakeFinishedMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
 from src.messages.server_hello_message_builder import ServerHelloMessageBuilder
 from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret, \
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
-    get_client_handshake_key
+    get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
+    get_server_handshake_iv
 from src.tls_fsm import TlsFsm, TlsFsmEvent
 from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
@@ -22,12 +25,17 @@ class TlsSession:
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
 
-        self.derived_secret = None
+        self.derived_secret: bytes or None = None
+        self.client_handshake_key: bytes or None = None
+        self.client_handshake_iv: bytes or None = None
+        self.server_handshake_key: bytes or None = None
+        self.server_handshake_iv: bytes or None = None
 
         self.client_hello: ClientHelloMessage or None = None
         self.server_hello: ServerHelloMessage or None = None
         self.certificate_message: CertificateMessage or None = None
         self.certificate_verify_message: CertificateVerifyMessage or None = None
+        self.server_finished_message: HandshakeFinishedMessage or None = None
 
         self.tls_fsm = TlsFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
@@ -61,6 +69,8 @@ class TlsSession:
                 event = TlsFsmEvent.CERTIFICATE_RECEIVED
             case HandshakeMessageType.CERTIFICATE_VERIFY:
                 event = TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED
+            case HandshakeMessageType.FINISHED:
+                event = TlsFsmEvent.FINISHED_RECEIVED
             case _:
                 event = None
 
@@ -82,6 +92,11 @@ class TlsSession:
 
         client_secret = get_client_secret_handshake(handshake_secret, hello_hash)
         self.client_handshake_key = get_client_handshake_key(client_secret)
+        self.client_handshake_iv = get_client_handshake_iv(client_secret)
+
+        server_secret = get_server_secret_handshake(handshake_secret, hello_hash)
+        self.server_handshake_key = get_server_handshake_key(server_secret)
+        self.server_handshake_iv = get_server_handshake_iv(server_secret)
         return True
 
     def _on_certificate_received_fsm_transaction(self, ctx):
@@ -94,4 +109,5 @@ class TlsSession:
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
-        pass
+        self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx)
+        return True

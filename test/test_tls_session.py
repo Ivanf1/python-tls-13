@@ -42,6 +42,8 @@ class TestTlsSession(unittest.TestCase):
          be 8d 48 59 ee 51 1f 60 29 57 b1 54 11 ac 02 76 71 45 9e 46 44
          5c 9e a5 8c 18 1e 81 8e 95 b8 c3 fb 0b f3 27 84 09 d3 be 15 2a
          3d a5 04 3e 06 3d da 65 cd f5 ae a2 0d 53 df ac d4 2f 74 f3""")
+        self.handshake_finished = bytes.fromhex("""17 03 03 01 19 14 00 00 20 9b 9b 14 1d 90 63 37 fb d2 cb
+         dc e7 1d f4 de da 4a b4 2c 30 95 72 cb 7f ff ee 54 54 b7 8f 07 18""")
 
     def test_should_return_client_hello_message_on_start(self):
         client_hello = self.tls_session.start()
@@ -80,3 +82,10 @@ class TestTlsSession(unittest.TestCase):
         self.tls_session.on_record_received(self.server_certificate_verify)
         self.assertEqual(self.tls_session.certificate_verify_message.to_bytes(), self.server_certificate_verify)
 
+    def test_should_store_handshake_finished_message_on_handshake_finished_message_received(self):
+        self.tls_session.start()
+        self.tls_session.on_record_received(self.server_hello)
+        self.tls_session.on_record_received(self.server_certificate)
+        self.tls_session.on_record_received(self.server_certificate_verify)
+        self.tls_session.on_record_received(self.handshake_finished)
+        self.assertEqual(self.tls_session.server_finished_message.to_bytes(), self.handshake_finished)
