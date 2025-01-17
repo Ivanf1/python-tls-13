@@ -112,7 +112,7 @@ class TestServerHelloMessageBuilder(unittest.TestCase):
          3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
         message = ServerHelloMessageBuilder.build_from_bytes(data)
         expected_cipher_suites = bytes.fromhex("13 01")
-        self.assertEqual(message.cipher_suites, expected_cipher_suites)
+        self.assertEqual(message.cipher_suite, expected_cipher_suites)
 
     def test_should_build_server_hello_message_from_bytes_correct_extensions_length(self):
         data = bytes.fromhex("""02 00 00 56 03 03 a6 af 06 a4 12 18 60

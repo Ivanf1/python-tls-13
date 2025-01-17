@@ -1,7 +1,7 @@
 import unittest
 
 from src.messages.server_hello_message import ServerHelloMessage
-from src.utils import TLSVersion
+from src.utils import TLSVersion, CipherSuites
 
 
 class TestServerHelloMessage(unittest.TestCase):
@@ -39,3 +39,6 @@ class TestServerHelloMessage(unittest.TestCase):
         public_key = self.server_hello_message.get_public_key()
         expected_public_key = bytes.fromhex("c9828876112095fe66762bdbf7c672e156d6cc253b833df1dd69b1b04e751f0f")
         self.assertEqual(public_key, expected_public_key)
+
+    def test_should_return_cipher_suite(self):
+        self.assertEqual(CipherSuites.TLS_AES_128_GCM_SHA256, self.server_hello_message.get_cipher_suite())

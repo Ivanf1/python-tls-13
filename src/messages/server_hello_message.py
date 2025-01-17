@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.utils import KeyExchangeGroups, SignatureAlgorithms, TLSVersion
+from src.utils import KeyExchangeGroups, SignatureAlgorithms, TLSVersion, CipherSuites
 
 
 @dataclass
@@ -9,7 +9,7 @@ class ServerHelloMessage:
     bytes_of_server_hello_data: bytes
     server_version: bytes
     server_random: bytes
-    cipher_suites: bytes
+    cipher_suite: bytes
     extensions_length: bytes
     extension_supported_versions: bytes
     extension_key_share: bytes
@@ -19,7 +19,7 @@ class ServerHelloMessage:
             self.bytes_of_server_hello_data + \
             self.server_version + \
             self.server_random + \
-            self.cipher_suites + \
+            self.cipher_suite + \
             self.extensions_length + \
             self.extension_supported_versions + \
             self.extension_key_share
@@ -29,6 +29,9 @@ class ServerHelloMessage:
 
     def get_public_key(self):
         return self.extension_key_share[8:]
+
+    def get_cipher_suite(self):
+        return CipherSuites(self.cipher_suite)
 
     @staticmethod
     def __get_extension_data(extension, data_type):

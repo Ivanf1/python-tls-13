@@ -93,7 +93,7 @@ class ServerHelloMessageBuilder:
             bytes_of_server_hello_data=bytes_of_server_hello_data,
             server_version=server_version,
             server_random=server_random,
-            cipher_suites=cipher_suites,
+            cipher_suite=cipher_suites,
             extensions_length=extensions_length,
             extension_supported_versions=extension_supported_versions,
             extension_key_share=extension_key_share
