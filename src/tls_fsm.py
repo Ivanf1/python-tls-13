@@ -20,16 +20,23 @@ class TlsFsmEvent(Enum):
 
 
 class TlsFsm(FSM):
-    def __init__(self):
+    def __init__(
+            self,
+            on_session_begin_transaction_cb = None,
+            on_server_hello_received_cb = None,
+            on_certificate_received_cb = None,
+            on_certificate_verify_received_cb = None,
+            on_finished_received_cb = None
+    ):
         tls_states = [state for state in TlsFsmState]
         self.events = [event for event in TlsFsmEvent]
 
         tls_table = {
-            (TlsFsmState.START, TlsFsmEvent.SESSION_BEGIN): (TlsFsmState.WAIT_SERVER_HELLO, self._on_session_begin),
-            (TlsFsmState.WAIT_SERVER_HELLO, TlsFsmEvent.SERVER_HELLO_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE, self._on_server_hello_received),
-            (TlsFsmState.WAIT_CERTIFICATE, TlsFsmEvent.CERTIFICATE_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE_VERIFY, self._on_certificate_received),
-            (TlsFsmState.WAIT_CERTIFICATE_VERIFY, TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED): (TlsFsmState.WAIT_FINISHED, self._on_certificate_verify_received),
-            (TlsFsmState.WAIT_FINISHED, TlsFsmEvent.FINISHED_RECEIVED): (TlsFsmState.CONNECTED, self._on_finished_received),
+            (TlsFsmState.START, TlsFsmEvent.SESSION_BEGIN): (TlsFsmState.WAIT_SERVER_HELLO, on_session_begin_transaction_cb),
+            (TlsFsmState.WAIT_SERVER_HELLO, TlsFsmEvent.SERVER_HELLO_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE, on_server_hello_received_cb),
+            (TlsFsmState.WAIT_CERTIFICATE, TlsFsmEvent.CERTIFICATE_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE_VERIFY, on_certificate_received_cb),
+            (TlsFsmState.WAIT_CERTIFICATE_VERIFY, TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED): (TlsFsmState.WAIT_FINISHED, on_certificate_verify_received_cb),
+            (TlsFsmState.WAIT_FINISHED, TlsFsmEvent.FINISHED_RECEIVED): (TlsFsmState.CONNECTED, on_finished_received_cb),
         }
 
         super().__init__(
@@ -37,21 +44,6 @@ class TlsFsm(FSM):
             initial_state=tls_states[0],
             table=tls_table,
         )
-
-    def _on_session_begin(self):
-        return True
-
-    def _on_server_hello_received(self):
-        pass
-
-    def _on_certificate_received(self):
-        pass
-
-    def _on_certificate_verify_received(self):
-        pass
-
-    def _on_finished_received(self):
-        pass
 
     def get_states(self):
         return self.states
