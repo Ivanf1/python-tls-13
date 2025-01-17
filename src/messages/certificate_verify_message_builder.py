@@ -50,3 +50,25 @@ class CertificateVerifyMessageBuilder:
             signature_len.to_bytes(2),
             signature,
         )
+
+    @staticmethod
+    def build_from_bytes(message_bytes: bytes):
+        """
+        Builds a CertificateVerifyMessage object from a byte representation of a certificate message.
+
+        :param message_bytes: The bytes of the message.
+        :return: CertificateVerifyMessage
+        """
+        handshake_message_type = message_bytes[0:1]
+        bytes_of_handshake_data = message_bytes[1:4]
+        signature_type = message_bytes[4:6]
+        bytes_of_signature_data = message_bytes[6:8]
+        signature = message_bytes[8:]
+
+        return CertificateVerifyMessage(
+            handshake_message_type=handshake_message_type,
+            bytes_of_handshake_data=bytes_of_handshake_data,
+            signature_type=signature_type,
+            bytes_of_signature_data=bytes_of_signature_data,
+            signature=signature
+        )
