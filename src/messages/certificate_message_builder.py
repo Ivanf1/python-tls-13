@@ -46,3 +46,29 @@ class CertificateMessageBuilder:
             self.certificate,
             certificate_extensions,
         )
+
+    @staticmethod
+    def build_from_bytes(message_bytes: bytes):
+        """
+        Builds a CertificateMessage object from a byte representation of a certificate message.
+
+        :param message_bytes: The bytes of the message.
+        :return: CertificateMessage
+        """
+        handshake_message_type = message_bytes[0:1]
+        bytes_of_certificate_payload = message_bytes[1:4]
+        request_context = message_bytes[4:5]
+        certificates_length = message_bytes[5:8]
+        certificate_length = message_bytes[8:11]
+        certificate = message_bytes[11:-2]
+        certificate_extensions = message_bytes[-2:]
+
+        return CertificateMessage(
+            handshake_message_type=handshake_message_type,
+            bytes_of_certificate_payload=bytes_of_certificate_payload,
+            request_context=request_context,
+            certificates_length=certificates_length,
+            certificate_length=certificate_length,
+            certificate=certificate,
+            certificate_extensions=certificate_extensions
+        )
