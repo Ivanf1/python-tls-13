@@ -1,12 +1,14 @@
 import unittest
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch, PropertyMock, Mock
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
-from src.tls_fsm import TlsFsm, TlsFsmEvent
+from src.record_manager import RecordManager
+from src.tls_fsm import TlsFsm, TlsFsmEvent, TlsFsmState
 from src.tls_session import TlsSession
+from src.utils import RecordHeaderType, HandshakeMessageType
 
 
 class TestTlsSession(unittest.TestCase):
@@ -235,3 +237,52 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.handshake_finished)
             expected_server_application_iv = bytes.fromhex("64550a27d2dcb9e7c682ee71")
             self.assertEqual(session.server_application_iv, expected_server_application_iv)
+
+    def test_should_decrypt_application_record(self):
+        with patch.object(TlsSession, "server_application_key", new_callable=PropertyMock) as mock_application_key, \
+                patch("src.tls_session.compute_new_nonce") as mock_application_iv, \
+                patch.object(TlsFsm, "get_current_state") as mock_tlsfsm:
+            mock_application_key.return_value = bytes.fromhex("""01f78623f17e3edcc09e944027ba3218d57c8e0db93cd3ac419309274700ac27""")
+            mock_application_iv.return_value = bytes.fromhex("""196a750b0c5049c0cc51a540""")
+
+            mock_tlsfsm.return_value = TlsFsmState.CONNECTED
+
+            on_application_message_callback = Mock()
+
+            session = TlsSession("example.com")
+            session.register_on_application_record_callback(on_application_message_callback)
+            session.start()
+            session.on_record_received(bytes.fromhex("""17 03 03 00 ea 38 ad fb 1d 01 fd 95 a6 03 85 e8 bb f1 fd 8d cb 46 70 98 97 e7 d6 74 
+                c2 f7 37 0e c1 1d 8e 33 eb 4f 4f e7 f5 4b f4 dc 0b 92 fa e7 42 1c 33 c6 45 3c eb c0 73 15 96 10 a0 97 40 ab 2d 
+                05 6f 8d 51 cf a2 62 00 7d 40 12 36 da fc 2f 72 92 ff 0c c8 86 a4 ef 38 9f 2c ed 12 26 c6 b4 dc f6 9d 99 4f f9 
+                14 8e f9 69 bc 77 d9 43 3a b1 d3 a9 32 54 21 82 82 9f 88 9a d9 5f 04 c7 52 f9 4a ce 57 14 6a 5d 84 b0 42 bf b3 
+                48 5a 64 e7 e9 57 b0 89 80 cd 08 ba f9 69 8b 89 29 98 6d 11 74 d4 aa 6d d7 a7 e8 c0 86 05 2c 3c 76 d8 19 34 bd 
+                f5 9b 96 6e 39 20 31 f3 47 1a de bd dd db e8 4f cf 1f f4 08 84 6a e9 b2 8c a4 a9 e7 28 84 4a 49 3d 80 45 5d 6e 
+                af f2 05 b4 0a 1e f1 85 74 ef c0 b9 6a d3 83 af bd 8d fc 86 f8 08 7c 1f 7d c8"""))
+            expected_application_message = bytes.fromhex("""17 03 03 00 ea 04 00 00 d5 00 00 1c 20 00 00 00 00 08 00 00 
+                00 00 00 00 00 01 00 c0 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 00 49 56 44 41 54 41 49 56 44 41 54 41 
+                00 41 45 53 cb 11 9d 4d bd 2a 21 ec c2 26 a6 09 0e e8 ca 58 df 09 03 9b 35 96 f4 de 79 98 0e a3 25 d5 14 62 
+                5c 0c 21 c5 0f 03 26 1d c4 2c e7 c5 97 0c 4c 01 16 06 fb 99 8a 86 c3 fa 30 e5 5e ea 91 f1 ff f3 18 fc 7b d5 
+                88 31 bf 49 c8 8d 7b 59 05 91 a6 5c 7d e8 cf c6 77 46 8a 54 fd be c0 d8 53 be 20 21 c8 bb fc db e5 1f 5d 9a 
+                0c 70 85 84 1a 01 e4 95 85 f6 8b 4a fe e1 d7 07 e2 cb b1 a0 b4 23 aa 7e 32 d5 60 7b d9 9d d4 db 3c 9a aa ed 
+                43 d3 5d 26 b4 b1 c6 84 71 71 ea a0 7a 9b c8 cb f7 58 49 9a 00 00 16""")
+            on_application_message_callback.assert_called_with(expected_application_message)
+
+    def test_should_decrypt_application_record_ping(self):
+        with patch.object(TlsSession, "server_application_key", new_callable=PropertyMock) as mock_application_key, \
+                patch("src.tls_session.compute_new_nonce") as mock_application_iv, \
+                patch.object(TlsFsm, "get_current_state") as mock_tlsfsm:
+            mock_application_key.return_value = bytes.fromhex("""01f78623f17e3edcc09e944027ba3218d57c8e0db93cd3ac419309274700ac27""")
+            mock_application_iv.return_value = bytes.fromhex("""196a750b0c5049c0cc51a543""")
+
+            mock_tlsfsm.return_value = TlsFsmState.CONNECTED
+
+            on_application_message_callback = Mock()
+
+            session = TlsSession("example.com")
+            session.register_on_application_record_callback(on_application_message_callback)
+            session.start()
+            session.on_record_received(bytes.fromhex("""17 03 03 00 15 0c da 85 f1 44 7a e2 3f a6 6d 56 f4 c5 40 84 82 
+                b1 b1 d4 c9 98"""))
+            expected_application_message = bytes.fromhex("""17 03 03 00 15 70 6f 6e 67 17""")
+            on_application_message_callback.assert_called_with(expected_application_message)
