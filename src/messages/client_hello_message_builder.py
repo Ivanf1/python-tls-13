@@ -91,6 +91,41 @@ class ClientHelloMessageBuilder:
             *extensions
         )
 
+    @staticmethod
+    def build_from_bytes(message_bytes):
+        handshake_message_type = message_bytes[0:1]
+        bytes_of_client_hello_data = message_bytes[1:4]
+        client_version = message_bytes[4:6]
+        client_random = message_bytes[6:38]
+        cipher_suites = message_bytes[38:42]
+        extensions_length = message_bytes[42:44]
+
+        bytes_of_server_name_data = int.from_bytes(message_bytes[46:48])
+        i = 44 + 2 + 2 + bytes_of_server_name_data
+
+        extension_server_name = message_bytes[44:i]
+        extension_supported_groups = message_bytes[i: i + 6]
+        i = i + 6
+        extension_signature_algorithms = message_bytes[i: i + 6]
+        i = i + 6
+        extension_supported_versions = message_bytes[i: i + 6]
+        i = i + 6
+        extension_key_share = message_bytes[i:]
+
+        return ClientHelloMessage(
+            handshake_message_type=handshake_message_type,
+            bytes_of_client_hello_data=bytes_of_client_hello_data,
+            client_version=client_version,
+            client_random=client_random,
+            cipher_suites=cipher_suites,
+            extensions_length=extensions_length,
+            extension_server_name=extension_server_name,
+            extension_supported_groups=extension_supported_groups,
+            extension_signature_algorithms=extension_signature_algorithms,
+            extension_supported_versions=extension_supported_versions,
+            extension_key_share=extension_key_share
+        )
+
     def __build_extension(self, flag, data):
         data_bytes = len(data).to_bytes(2)
         # Each extension starts with a flag indicating the type of extension which has a length of 2 bytes.
