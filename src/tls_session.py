@@ -38,6 +38,8 @@ class TlsSession:
         self.certificate_verify_message: CertificateVerifyMessage or None = None
         self.server_finished_message: HandshakeFinishedMessage or None = None
 
+        self.handshake_messages_received = 0
+
         self.tls_fsm = TlsFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
             on_server_hello_received_cb=self._on_server_hello_received_fsm_transaction,
@@ -74,16 +76,19 @@ class TlsSession:
             # Based on the current state of the TLS FSM machine
             # we know which key to use to decrypt the record.
             if self.tls_fsm.get_current_state() in handshake_states:
-                # Every time a new encrypted message is received, we need to xor the iv (nonce) with 1.
+                # Every time a new encrypted message is received, we need to xor the iv (nonce)
+                # with the number of messages received.
                 # https://datatracker.ietf.org/doc/html/rfc8446#section-5.3
-                self.server_handshake_iv = self._compute_new_iv(self.server_handshake_iv)
+
+                nonce = self._compute_new_nonce(self.server_handshake_iv, self.handshake_messages_received)
+                self.handshake_messages_received += 1
 
                 # Use handshake key
                 header = RecordManager.get_record_header(record)
                 record = header + RecordManager.get_decrypted_record_payload(
                     record,
                     self.server_handshake_key,
-                    self.server_handshake_iv
+                    nonce,
                 )
             else:
                 # Use application key
@@ -141,10 +146,10 @@ class TlsSession:
         self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx)
         return True
 
-    def _compute_new_iv(self, iv):
+    def _compute_new_nonce(self, iv, n):
         # Convert the bytes to a single integer
         num = int.from_bytes(iv, byteorder='big')
-        # XOR the integer with 1
-        xor_result = num ^ 1
+        # XOR the integer with n
+        xor_result = num ^ n
         # Convert the result back to bytes
         return xor_result.to_bytes(len(iv), byteorder='big')
