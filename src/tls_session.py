@@ -146,10 +146,16 @@ class TlsSession:
         self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx)
         return True
 
-    def _compute_new_nonce(self, iv, n):
-        # Convert the bytes to a single integer
-        num = int.from_bytes(iv, byteorder='big')
-        # XOR the integer with n
-        xor_result = num ^ n
-        # Convert the result back to bytes
-        return xor_result.to_bytes(len(iv), byteorder='big')
+    def _compute_new_nonce(self, iv, seq):
+        """
+        Modifies the `iv` bytearray by XORing it with the `seq` value.
+
+        :param iv: A bytearray representing the IV (Initialization Vector).
+        :param seq: A 64-bit integer sequence value.
+        """
+        gcm_ivlen = 12
+        iv_array = bytearray(iv)
+        for i in range(8):
+            iv_array[gcm_ivlen - 1 - i] ^= (seq >> (i * 8)) & 0xFF
+
+        return bytes(iv_array)

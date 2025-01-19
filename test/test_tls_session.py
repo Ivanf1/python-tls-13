@@ -15,8 +15,7 @@ class TestTlsSession(unittest.TestCase):
          3b 83 3d f1 dd 69 b1 b0 4e 75 1f 0f""")
         self.server_certificate = bytes.fromhex("""17 03 03 03 43 ba f0 0a 9b e5 0f 3f 23 07 e7 26 ed cb da cb e4 b1 86 16 44 9d 46 c6 20 7a f6 e9 95 3e e5 d2 41 1b a6 5d 31 fe af 4f 78 76 4f 2d 69 39 87 18 6c c0 13 29 c1 87 a5 e4 60 8e 8d 27 b3 18 e9 8d d9 47 69 f7 73 9c e6 76 83 92 ca ca 8d cc 59 7d 77 ec 0d 12 72 23 37 85 f6 e6 9d 6f 43 ef fa 8e 79 05 ed fd c4 03 7e ee 59 33 e9 90 a7 97 2f 20 69 13 a3 1e 8d 04 93 13 66 d3 d8 bc d6 a4 a4 d6 47 dd 4b d8 0b 0f f8 63 ce 35 54 83 3d 74 4c f0 e0 b9 c0 7c ae 72 6d d2 3f 99 53 df 1f 1c e3 ac eb 3b 72 30 87 1e 92 31 0c fb 2b 09 84 86 f4 35 38 f8 e8 2d 84 04 e5 c6 c2 5f 66 a6 2e be 3c 5f 26 23 26 40 e2 0a 76 91 75 ef 83 48 3c d8 1e 6c b1 6e 78 df ad 4c 1b 71 4b 04 b4 5f 6a c8 d1 06 5a d1 8c 13 45 1c 90 55 c4 7d a3 00 f9 35 36 ea 56 f5 31 98 6d 64 92 77 53 93 c4 cc b0 95 46 70 92 a0 ec 0b 43 ed 7a 06 87 cb 47 0c e3 50 91 7b 0a c3 0c 6e 5c 24 72 5a 78 c4 5f 9f 5f 29 b6 62 68 67 f6 f7 9c e0 54 27 35 47 b3 6d f0 30 bd 24 af 10 d6 32 db a5 4f c4 e8 90 bd 05 86 92 8c 02 06 ca 2e 28 e4 4e 22 7a 2d 50 63 19 59 35 df 38 da 89 36 09 2e ef 01 e8 4c ad 2e 49 d6 2e 47 0a 6c 77 45 f6 25 ec 39 e4 fc 23 32 9c 79 d1 17 28 76 80 7c 36 d7 36 ba 42 bb 69 b0 04 ff 55 f9 38 50 dc 33 c1 f9 8a bb 92 85 83 24 c7 6f f1 eb 08 5d b3 c1 fc 50 f7 4e c0 44 42 e6 22 97 3e a7 07 43 41 87 94 c3 88 14 0b b4 92 d6 29 4a 05 40 e5 a5 9c fa e6 0b a0 f1 48 99 fc a7 13 33 31 5e a0 83 a6 8e 1d 7c 1e 4c dc 2f 56 bc d6 11 96 81 a4 ad bc 1b bf 42 af d8 06 c3 cb d4 2a 07 6f 54 5d ee 4e 11 8d 0b 39 67 54 be 2b 04 2a 68 5d d4 72 7e 89 c0 38 6a 94 d3 cd 6e cb 98 20 e9 d4 9a fe ed 66 c4 7e 6f c2 43 ea be bb cb 0b 02 45 38 77 f5 ac 5d bf bd f8 db 10 52 a3 c9 94 b2 24 cd 9a aa f5 6b 02 6b b9 ef a2 e0 13 02 b3 64 01 ab 64 94 e7 01 8d 6e 5b 57 3b d3 8b ce f0 23 b1 fc 92 94 6b bc a0 20 9c a5 fa 92 6b 49 70 b1 00 91 03 64 5c b1 fc fe 55 23 11 ff 73 05 58 98 43 70 03 8f d2 cc e2 a9 1f c7 4d 6f 3e 3e a9 f8 43 ee d3 56 f6 f8 2d 35 d0 3b c2 4b 81 b5 8c eb 1a 43 ec 94 37 e6 f1 e5 0e b6 f5 55 e3 21 fd 67 c8 33 2e b1 b8 32 aa 8d 79 5a 27 d4 79 c6 e2 7d 5a 61 03 46 83 89 19 03 f6 64 21 d0 94 e1 b0 0a 9a 13 8d 86 1e 6f 78 a2 0a d3 e1 58 00 54 d2 e3 05 25 3c 71 3a 02 fe 1e 28 de ee 73 36 24 6f 6a e3 43 31 80 6b 46 b4 7b 83 3c 39 b9 d3 1c d3 00 c2 a6 ed 83 13 99 77 6d 07 f5 70 ea f0 05 9a 2c 68 a5 f3 ae 16 b6 17 40 4a f7 b7 23 1a 4d 94 27 58 fc 02 0b 3f 23 ee 8c 15 e3 60 44 cf d6 7c d6 40 99 3b 16 20 75 97 fb f3 85 ea 7a 4d 99 e8 d4 56 ff 83 d4 1f 7b 8b 4f 06 9b 02 8a 2a 63 a9 19 a7 0e 3a 10 e3 08 41 58 fa a5 ba fa 30 18 6c 6b 2f 23 8e b5 30 c7 3e""")
         self.server_certificate_verify = bytes.fromhex("""17 03 03 01 19 73 71 9f ce 07 ec 2f 6d 3b ba 02 92 a0 d4 0b 27 70 c0 6a 27 17 99 a5 33 14 f6 f7 7f c9 5c 5f e7 b9 a4 32 9f d9 54 8c 67 0e be ea 2f 2d 5c 35 1d d9 35 6e f2 dc d5 2e b1 37 bd 3a 67 65 22 f8 cd 0f b7 56 07 89 ad 7b 0e 3c ab a2 e3 7e 6b 41 99 c6 79 3b 33 46 ed 46 cf 74 0a 9f a1 fe c4 14 dc 71 5c 41 5c 60 e5 75 70 3c e6 a3 4b 70 b5 19 1a a6 a6 1a 18 fa ff 21 6c 68 7a d8 d1 7e 12 a7 e9 99 15 a6 11 bf c1 a2 be fc 15 e6 e9 4d 78 46 42 e6 82 fd 17 38 2a 34 8c 30 10 56 b9 40 c9 84 72 00 40 8b ec 56 c8 1e a3 d7 21 7a b8 e8 5a 88 71 53 95 89 9c 90 58 7f 72 e8 dd d7 4b 26 d8 ed c1 c7 c8 37 d9 f2 eb bc 26 09 62 21 90 38 b0 56 54 a6 3a 0b 12 99 9b 4a 83 06 a3 dd cc 0e 17 c5 3b a8 f9 c8 03 63 f7 84 13 54 d2 91 b4 ac e0 c0 f3 30 c0 fc d5 aa 9d ee f9 69 ae 8a b2 d9 8d a8 8e bb 6e a8 0a 3a 11 f0 0e a2 96 a3 23 23 67 ff 07 5e 1c 66 dd 9c be dc 47 13""")
-        self.handshake_finished = bytes.fromhex("""17 03 03 01 19 14 00 00 20 9b 9b 14 1d 90 63 37 fb d2 cb
-         dc e7 1d f4 de da 4a b4 2c 30 95 72 cb 7f ff ee 54 54 b7 8f 07 18""")
+        self.handshake_finished = bytes.fromhex("""17 03 03 00 45 10 61 de 27 e5 1c 2c 9f 34 29 11 80 6f 28 2b 71 0c 10 63 2c a5 00 67 55 88 0d bf 70 06 00 2d 0e 84 fe d9 ad f2 7a 43 b5 19 23 03 e4 df 5c 28 5d 58 e3 c7 62 24 07 84 40 c0 74 23 74 74 4a ec f2 8c f3 18 2f d0""")
 
     def test_should_return_client_hello_message_on_start(self):
         client_hello = self.tls_session.start()
@@ -40,6 +39,12 @@ class TestTlsSession(unittest.TestCase):
         self.tls_session.start()
         self.tls_session.on_record_received(self.server_hello)
         self.assertIs(len(self.tls_session.client_handshake_key), 16)
+
+    def test_should_compute_new_nonce(self):
+        iv = bytes.fromhex("9563bc8b590f671f488d2da3")
+        new_iv = self.tls_session._compute_new_nonce(iv, 1)
+        expected_new_iv = bytes.fromhex("9563bc8b590f671f488d2da2")
+        self.assertEqual(new_iv, expected_new_iv)
 
     def test_should_store_certificate_message_on_certificate_message_received(self):
         with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key,\
@@ -79,15 +84,12 @@ class TestTlsSession(unittest.TestCase):
 
     def test_should_store_certificate_verify_message_on_certificate_verify_message_received(self):
         with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
-                patch.object(TlsSession, "server_handshake_iv", new_callable=PropertyMock) as mock_handshake_iv:
+                patch.object(TlsSession, "_compute_new_nonce") as mock_handshake_iv:
             mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
-                bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da1"""),
             ]
-            def mock_set(a, b, c):
-                pass
-            mock_handshake_iv.__set__ = mock_set
 
             session = TlsSession("example.com")
             session.start()
@@ -97,12 +99,21 @@ class TestTlsSession(unittest.TestCase):
             expected_certificate_verify_record = bytes.fromhex("""17 03 03 01 19 0f 00 01 04 08 04 01 00 5c bb 24 c0 40 93 32 da a9 20 bb ab bd b9 bd 50 17 0b e4 9c fb e0 a4 10 7f ca 6f fb 10 68 e6 5f 96 9e 6d e7 d4 f9 e5 60 38 d6 7c 69 c0 31 40 3a 7a 7c 0b cc 86 83 e6 57 21 a0 c7 2c c6 63 40 19 ad 1d 3a d2 65 a8 12 61 5b a3 63 80 37 20 84 f5 da ec 7e 63 d3 f4 93 3f 27 22 74 19 a6 11 03 46 44 dc db c7 be 3e 74 ff ac 47 3f aa ad de 8c 2f c6 5f 32 65 77 3e 7e 62 de 33 86 1f a7 05 d1 9c 50 6e 89 6c 8d 82 f5 bc f3 5f ec e2 59 b7 15 38 11 5e 9c 8c fb a6 2e 49 bb 84 74 f5 85 87 b1 1b 8a e3 17 c6 33 e9 c7 6c 79 1d 46 62 84 ad 9c 4f f7 35 a6 d2 e9 63 b5 9b bc a4 40 a3 07 09 1a 1b 4e 46 bc c7 a2 f9 fb 2f 1c 89 8e cb 19 91 8b e4 12 1d 7e 8e d0 4c d5 0c 9a 59 e9 87 98 01 07 bb bf 29 9c 23 2e 7f db e1 0a 4c fd ae 5c 89 1c 96 af df f9 4b 54 cc d2 bc 19 d3 cd aa 66 44 85 9c 16""")
             self.assertEqual(session.certificate_verify_message.to_bytes(), expected_certificate_verify_record)
 
-"""
     def test_should_store_handshake_finished_message_on_handshake_finished_message_received(self):
-        self.tls_session.start()
-        self.tls_session.on_record_received(self.server_hello)
-        self.tls_session.on_record_received(self.server_certificate)
-        self.tls_session.on_record_received(self.server_certificate_verify)
-        self.tls_session.on_record_received(self.handshake_finished)
-        self.assertEqual(self.tls_session.server_finished_message.to_bytes(), self.handshake_finished)
-"""
+        with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
+                patch.object(TlsSession, "_compute_new_nonce") as mock_handshake_iv:
+            mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
+            mock_handshake_iv.side_effect = [
+                bytes.fromhex("""9563bc8b590f671f488d2da2"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da1"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+            ]
+
+            session = TlsSession("example.com")
+            session.start()
+            session.on_record_received(self.server_hello)
+            session.on_record_received(self.server_certificate)
+            session.on_record_received(self.server_certificate_verify)
+            session.on_record_received(self.handshake_finished)
+            expected_handshake_finished_message = bytes.fromhex("""17 03 03 00 45 14 00 00 30 7e 30 ee cc b6 b2 3b e6 c6 ca 36 39 92 e8 42 da 87 7e e6 47 15 ae 7f c0 cf 87 f9 e5 03 21 82 b5 bb 48 d1 e3 3f 99 79 05 5a 16 0c 8d bb b1 56 9c 16""")
+            self.assertEqual(session.server_finished_message.to_bytes(), expected_handshake_finished_message)
