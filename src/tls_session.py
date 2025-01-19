@@ -15,21 +15,22 @@ from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_ea
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
     get_server_handshake_iv
-from src.tls_fsm import TlsFsm, TlsFsmEvent
+from src.tls_fsm import TlsFsm, TlsFsmEvent, TlsFsmState
 from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
 
 class TlsSession:
+    client_handshake_key: bytes or None = None
+    client_handshake_iv: bytes or None = None
+    server_handshake_key: bytes or None = None
+    server_handshake_iv: bytes or None = None
+
     def __init__(self, server_name):
         self.server_name = server_name
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
 
         self.derived_secret: bytes or None = None
-        self.client_handshake_key: bytes or None = None
-        self.client_handshake_iv: bytes or None = None
-        self.server_handshake_key: bytes or None = None
-        self.server_handshake_iv: bytes or None = None
 
         self.client_hello: ClientHelloMessage or None = None
         self.server_hello: ServerHelloMessage or None = None
@@ -60,6 +61,34 @@ class TlsSession:
         )
 
     def on_record_received(self, record):
+        record_type = RecordManager.get_record_type(record)
+
+        handshake_states = [
+            TlsFsmState.WAIT_CERTIFICATE,
+            TlsFsmState.WAIT_CERTIFICATE_VERIFY,
+            TlsFsmState.WAIT_FINISHED,
+        ]
+
+        if record_type == RecordHeaderType.APPLICATION_DATA:
+            # The record needs to be decrypted.
+            # Based on the current state of the TLS FSM machine
+            # we know which key to use to decrypt the record.
+            if self.tls_fsm.get_current_state() in handshake_states:
+                # Every time a new encrypted message is received, we need to xor the iv (nonce) with 1.
+                # https://datatracker.ietf.org/doc/html/rfc8446#section-5.3
+                self.server_handshake_iv = self._compute_new_iv(self.server_handshake_iv)
+
+                # Use handshake key
+                header = RecordManager.get_record_header(record)
+                record = header + RecordManager.get_decrypted_record_payload(
+                    record,
+                    self.server_handshake_key,
+                    self.server_handshake_iv
+                )
+            else:
+                # Use application key
+                pass
+
         message_type = RecordManager.get_handshake_message_type(record)
 
         match message_type:
@@ -111,3 +140,11 @@ class TlsSession:
     def _on_finished_received_fsm_transaction(self, ctx):
         self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx)
         return True
+
+    def _compute_new_iv(self, iv):
+        # Convert the bytes to a single integer
+        num = int.from_bytes(iv, byteorder='big')
+        # XOR the integer with 1
+        xor_result = num ^ 1
+        # Convert the result back to bytes
+        return xor_result.to_bytes(len(iv), byteorder='big')
