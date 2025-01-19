@@ -40,12 +40,6 @@ class TestTlsSession(unittest.TestCase):
         self.tls_session.on_record_received(self.server_hello)
         self.assertIs(len(self.tls_session.client_handshake_key), 16)
 
-    def test_should_compute_new_nonce(self):
-        iv = bytes.fromhex("9563bc8b590f671f488d2da3")
-        new_iv = self.tls_session._compute_new_nonce(iv, 1)
-        expected_new_iv = bytes.fromhex("9563bc8b590f671f488d2da2")
-        self.assertEqual(new_iv, expected_new_iv)
-
     def test_should_store_certificate_message_on_certificate_message_received(self):
         with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key,\
             patch.object(TlsSession, "server_handshake_iv", new_callable=PropertyMock) as mock_handshake_iv:
@@ -84,7 +78,7 @@ class TestTlsSession(unittest.TestCase):
 
     def test_should_store_certificate_verify_message_on_certificate_verify_message_received(self):
         with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
-                patch.object(TlsSession, "_compute_new_nonce") as mock_handshake_iv:
+                patch("src.tls_session.compute_new_nonce") as mock_handshake_iv:
             mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
@@ -101,7 +95,7 @@ class TestTlsSession(unittest.TestCase):
 
     def test_should_store_handshake_finished_message_on_handshake_finished_message_received(self):
         with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
-                patch.object(TlsSession, "_compute_new_nonce") as mock_handshake_iv:
+                patch("src.tls_session.compute_new_nonce") as mock_handshake_iv:
             mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),

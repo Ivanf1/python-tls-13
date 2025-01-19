@@ -14,7 +14,7 @@ from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret, \
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
-    get_server_handshake_iv
+    get_server_handshake_iv, compute_new_nonce
 from src.tls_fsm import TlsFsm, TlsFsmEvent, TlsFsmState
 from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
@@ -80,7 +80,7 @@ class TlsSession:
                 # with the number of messages received.
                 # https://datatracker.ietf.org/doc/html/rfc8446#section-5.3
 
-                nonce = self._compute_new_nonce(self.server_handshake_iv, self.handshake_messages_received)
+                nonce = compute_new_nonce(self.server_handshake_iv, self.handshake_messages_received)
                 self.handshake_messages_received += 1
 
                 # Use handshake key
@@ -145,17 +145,3 @@ class TlsSession:
     def _on_finished_received_fsm_transaction(self, ctx):
         self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx)
         return True
-
-    def _compute_new_nonce(self, iv, seq):
-        """
-        Modifies the `iv` bytearray by XORing it with the `seq` value.
-
-        :param iv: A bytearray representing the IV (Initialization Vector).
-        :param seq: A 64-bit integer sequence value.
-        """
-        gcm_ivlen = 12
-        iv_array = bytearray(iv)
-        for i in range(8):
-            iv_array[gcm_ivlen - 1 - i] ^= (seq >> (i * 8)) & 0xFF
-
-        return bytes(iv_array)

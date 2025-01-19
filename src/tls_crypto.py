@@ -222,3 +222,17 @@ def decrypt(key, nonce, data, aad):
     :return: decrypted data
     """
     return AESGCM(key).decrypt(nonce, data, aad)
+
+def compute_new_nonce(iv, seq):
+    """
+    Modifies the `iv` by XORing it with the `seq` value.
+
+    :param iv: A bytearray representing the IV (Initialization Vector).
+    :param seq: A 64-bit integer sequence value.
+    """
+    gcm_ivlen = 12
+    iv_array = bytearray(iv)
+    for i in range(8):
+        iv_array[gcm_ivlen - 1 - i] ^= (seq >> (i * 8)) & 0xFF
+
+    return bytes(iv_array)
