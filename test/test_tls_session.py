@@ -1,6 +1,10 @@
 import unittest
 from unittest.mock import patch, PropertyMock
 
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+
+from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.tls_fsm import TlsFsm, TlsFsmEvent
 from src.tls_session import TlsSession
 
@@ -111,3 +115,123 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.handshake_finished)
             expected_handshake_finished_message = bytes.fromhex("""17 03 03 00 45 14 00 00 30 7e 30 ee cc b6 b2 3b e6 c6 ca 36 39 92 e8 42 da 87 7e e6 47 15 ae 7f c0 cf 87 f9 e5 03 21 82 b5 bb 48 d1 e3 3f 99 79 05 5a 16 0c 8d bb b1 56 9c 16""")
             self.assertEqual(session.server_finished_message.to_bytes(), expected_handshake_finished_message)
+
+    def test_should_compute_client_application_key_on_handshake_finished(self):
+        with patch("src.tls_session.get_X25519_private_key") as mock_private_key, \
+            patch("src.tls_session.get_X25519_public_key") as mock_public_key, \
+            patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
+            patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
+            patch.object(TlsSession,"client_hello", new_callable=PropertyMock) as client_hello:
+            mock_handshake_key.return_value = bytes.fromhex(
+                """9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
+            mock_handshake_iv.side_effect = [
+                bytes.fromhex("""9563bc8b590f671f488d2da2"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da1"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+            ]
+            mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
+            mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
+            client_hello.return_value = ClientHelloMessageBuilder.build_from_bytes(bytes.fromhex("""
+                01 00 00 f4 03 03 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 
+                12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 00 08 13 01 00 a3 00 00 00 18 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 
+                75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
+                72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
+
+            session = TlsSession("example.com")
+            session.start()
+            session.on_record_received(self.server_hello)
+            session.on_record_received(self.server_certificate)
+            session.on_record_received(self.server_certificate_verify)
+            session.on_record_received(self.handshake_finished)
+            expected_client_application_key = bytes.fromhex("6657687d4bca0c6775502713979ef15f")
+            self.assertEqual(session.client_application_key, expected_client_application_key)
+
+    def test_should_compute_client_application_iv_on_handshake_finished(self):
+        with patch("src.tls_session.get_X25519_private_key") as mock_private_key, \
+                patch("src.tls_session.get_X25519_public_key") as mock_public_key, \
+                patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
+                patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
+                patch.object(TlsSession,"client_hello", new_callable=PropertyMock) as client_hello:
+            mock_handshake_key.return_value = bytes.fromhex(
+                """9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
+            mock_handshake_iv.side_effect = [
+                bytes.fromhex("""9563bc8b590f671f488d2da2"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da1"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+            ]
+            mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
+            mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
+            client_hello.return_value = ClientHelloMessageBuilder.build_from_bytes(bytes.fromhex("""
+                01 00 00 f4 03 03 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 
+                12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 00 08 13 01 00 a3 00 00 00 18 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 
+                75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
+                72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
+
+            session = TlsSession("example.com")
+            session.start()
+            session.on_record_received(self.server_hello)
+            session.on_record_received(self.server_certificate)
+            session.on_record_received(self.server_certificate_verify)
+            session.on_record_received(self.handshake_finished)
+            expected_client_application_iv = bytes.fromhex("9a976a52aaad1dd14b405251")
+            self.assertEqual(session.client_application_iv, expected_client_application_iv)
+
+    def test_should_compute_server_application_key_on_handshake_finished(self):
+        with patch("src.tls_session.get_X25519_private_key") as mock_private_key, \
+                patch("src.tls_session.get_X25519_public_key") as mock_public_key, \
+                patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
+                patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
+                patch.object(TlsSession,"client_hello", new_callable=PropertyMock) as client_hello:
+            mock_handshake_key.return_value = bytes.fromhex(
+                """9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
+            mock_handshake_iv.side_effect = [
+                bytes.fromhex("""9563bc8b590f671f488d2da2"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da1"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+            ]
+            mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
+            mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
+            client_hello.return_value = ClientHelloMessageBuilder.build_from_bytes(bytes.fromhex("""
+                01 00 00 f4 03 03 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 
+                12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 00 08 13 01 00 a3 00 00 00 18 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 
+                75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
+                72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
+
+            session = TlsSession("example.com")
+            session.start()
+            session.on_record_received(self.server_hello)
+            session.on_record_received(self.server_certificate)
+            session.on_record_received(self.server_certificate_verify)
+            session.on_record_received(self.handshake_finished)
+            expected_server_application_key = bytes.fromhex("fec4770a69738120fc36df29cf92bb06")
+            self.assertEqual(session.server_application_key, expected_server_application_key)
+
+    def test_should_compute_server_application_iv_on_handshake_finished(self):
+        with patch("src.tls_session.get_X25519_private_key") as mock_private_key, \
+                patch("src.tls_session.get_X25519_public_key") as mock_public_key, \
+                patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
+                patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
+                patch.object(TlsSession,"client_hello", new_callable=PropertyMock) as client_hello:
+            mock_handshake_key.return_value = bytes.fromhex(
+                """9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
+            mock_handshake_iv.side_effect = [
+                bytes.fromhex("""9563bc8b590f671f488d2da2"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da1"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+            ]
+            mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
+            mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
+            client_hello.return_value = ClientHelloMessageBuilder.build_from_bytes(bytes.fromhex("""
+                01 00 00 f4 03 03 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 
+                12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 00 08 13 01 00 a3 00 00 00 18 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 
+                75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
+                72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
+
+            session = TlsSession("example.com")
+            session.start()
+            session.on_record_received(self.server_hello)
+            session.on_record_received(self.server_certificate)
+            session.on_record_received(self.server_certificate_verify)
+            session.on_record_received(self.handshake_finished)
+            expected_server_application_iv = bytes.fromhex("64550a27d2dcb9e7c682ee71")
+            self.assertEqual(session.server_application_iv, expected_server_application_iv)

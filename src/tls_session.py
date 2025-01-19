@@ -14,7 +14,9 @@ from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret, \
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
-    get_server_handshake_iv, compute_new_nonce
+    get_server_handshake_iv, compute_new_nonce, get_master_secret, get_client_secret_application, \
+    get_server_secret_application, get_client_application_key, get_client_application_iv, get_server_application_key, \
+    get_server_application_iv
 from src.tls_fsm import TlsFsm, TlsFsmEvent, TlsFsmState
 from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
@@ -25,18 +27,24 @@ class TlsSession:
     server_handshake_key: bytes or None = None
     server_handshake_iv: bytes or None = None
 
+    client_application_key: bytes or None = None
+    client_application_iv: bytes or None = None
+    server_application_key: bytes or None = None
+    server_application_iv: bytes or None = None
+
+    client_hello: ClientHelloMessage or None = None
+    server_hello: ServerHelloMessage or None = None
+    certificate_message: CertificateMessage or None = None
+    certificate_verify_message: CertificateVerifyMessage or None = None
+    server_finished_message: HandshakeFinishedMessage or None = None
+
     def __init__(self, server_name):
         self.server_name = server_name
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
 
         self.derived_secret: bytes or None = None
-
-        self.client_hello: ClientHelloMessage or None = None
-        self.server_hello: ServerHelloMessage or None = None
-        self.certificate_message: CertificateMessage or None = None
-        self.certificate_verify_message: CertificateVerifyMessage or None = None
-        self.server_finished_message: HandshakeFinishedMessage or None = None
+        self.handshake_secret: bytes or None = None
 
         self.handshake_messages_received = 0
 
@@ -120,15 +128,15 @@ class TlsSession:
         self.server_public_key = X25519PublicKey.from_public_bytes(self.server_hello.get_public_key())
 
         shared_secret = get_shared_secret(self.private_key, self.server_public_key)
-        handshake_secret = get_handshake_secret(shared_secret, self.derived_secret)
+        self.handshake_secret = get_handshake_secret(shared_secret, self.derived_secret)
 
         hello_hash = get_records_hash_sha256(self.client_hello.to_bytes(), self.server_hello.to_bytes())
 
-        client_secret = get_client_secret_handshake(handshake_secret, hello_hash)
+        client_secret = get_client_secret_handshake(self.handshake_secret, hello_hash)
         self.client_handshake_key = get_client_handshake_key(client_secret)
         self.client_handshake_iv = get_client_handshake_iv(client_secret)
 
-        server_secret = get_server_secret_handshake(handshake_secret, hello_hash)
+        server_secret = get_server_secret_handshake(self.handshake_secret, hello_hash)
         self.server_handshake_key = get_server_handshake_key(server_secret)
         self.server_handshake_iv = get_server_handshake_iv(server_secret)
         return True
@@ -144,4 +152,23 @@ class TlsSession:
 
     def _on_finished_received_fsm_transaction(self, ctx):
         self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx)
+
+        derived_secret = get_derived_secret(self.handshake_secret)
+        master_secret = get_master_secret(derived_secret)
+
+        handshake_hash = get_records_hash_sha256(
+            self.client_hello.to_bytes(),
+            self.server_hello.to_bytes(),
+            self.certificate_message.to_bytes(),
+            self.certificate_verify_message.to_bytes(),
+            self.server_finished_message.to_bytes(),
+        )
+
+        client_secret = get_client_secret_application(master_secret, handshake_hash)
+        server_secret = get_server_secret_application(master_secret, handshake_hash)
+
+        self.client_application_key = get_client_application_key(client_secret)
+        self.client_application_iv = get_client_application_iv(client_secret)
+        self.server_application_key = get_server_application_key(server_secret)
+        self.server_application_iv = get_server_application_iv(server_secret)
         return True
