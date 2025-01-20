@@ -2,6 +2,8 @@ import hashlib
 import hmac
 import secrets
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDFExpand
@@ -236,3 +238,29 @@ def compute_new_nonce(iv, seq):
         iv_array[gcm_ivlen - 1 - i] ^= (seq >> (i * 8)) & 0xFF
 
     return bytes(iv_array)
+
+def get_certificate_verify_signature(handshake_hash, private_key_path):
+    context_string = b'TLS 1.3, server CertificateVerify'
+
+    # 64 bytes of 0x20 (space)
+    prefix = b"\x20" * 64
+
+    data_to_sign = prefix + context_string + b"\x00" + handshake_hash
+
+    # Load the RSA private key from the PEM file
+    with open(private_key_path, "rb") as key_file:
+        private_key = serialization.load_pem_private_key(
+            key_file.read(),
+            password=None
+        )
+
+        signature = private_key.sign(
+            data_to_sign,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256(),
+        )
+
+        return signature

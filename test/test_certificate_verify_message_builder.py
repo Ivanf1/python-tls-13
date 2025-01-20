@@ -13,14 +13,9 @@ class TestCertificateVerifyMessageBuilder(unittest.TestCase):
          5c 9e a5 8c 18 1e 81 8e 95 b8 c3 fb 0b f3 27 84 09 d3 be 15 2a
          3d a5 04 3e 06 3d da 65 cd f5 ae a2 0d 53 df ac d4 2f 74 f3""")
 
-    def test_should_return_signature(self):
+    def test_should_return_certificate_verify_message(self):
         m = CertificateVerifyMessageBuilder(f"../test/data/private_key.pem")
-        signature = m.get_signature(b'')
-        self.assertIs(len(signature), 256)
-
-    def test_should_return_certificate_verify_message_new(self):
-        m = CertificateVerifyMessageBuilder(f"../test/data/private_key.pem")
-        certificate_verify_message = m.get_certificate_verify_message(b'').to_bytes()
+        certificate_verify_message = m.get_certificate_verify_message(b'',f"../test/data/private_key.pem").to_bytes()
         certificate_verify_message_first_bytes = certificate_verify_message[:8]
         expected_certificate_verify_message_first_bytes = bytes.fromhex("""0f 00 01 04 08 04 01 00""")
         self.assertEqual(certificate_verify_message_first_bytes, expected_certificate_verify_message_first_bytes)

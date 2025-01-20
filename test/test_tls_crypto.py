@@ -8,7 +8,7 @@ from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_z
     get_client_handshake_iv, get_server_handshake_iv, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_server_application_key, get_client_application_iv, \
     get_server_application_iv, get_finished_secret, get_hash_sha256, get_hmac_sha256, encrypt, decrypt, \
-    get_records_hash_sha256, compute_new_nonce
+    get_records_hash_sha256, compute_new_nonce, get_certificate_verify_signature
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -411,3 +411,7 @@ class TestTLSCrypto(unittest.TestCase):
         new_iv = compute_new_nonce(iv, 1)
         expected_new_iv = bytes.fromhex("9563bc8b590f671f488d2da2")
         self.assertEqual(new_iv, expected_new_iv)
+
+    def test_should_compute_certificate_verify_message_signature(self):
+        signature = get_certificate_verify_signature(b'', f"../test/data/private_key.pem")
+        self.assertIs(len(signature), 256)
