@@ -1,3 +1,4 @@
+import binascii
 import unittest
 from unittest.mock import patch
 
@@ -35,6 +36,11 @@ class TestServerHelloMessageBuilder(unittest.TestCase):
         supported_versions_extension = self.server_hello.get_supported_versions_extension()
         expected_supported_versions_extension = bytes.fromhex("""00 2b 00 02 03 04""")
         self.assertEqual(supported_versions_extension, expected_supported_versions_extension)
+
+    def test_should_return_extensions_list(self):
+        extensions_list = self.server_hello.get_extensions_list()
+        expected_extensions_list = bytes.fromhex("""002e002b0002030400330024001d0020""") + self.public_key.public_bytes_raw()
+        self.assertEqual(extensions_list, expected_extensions_list)
 
     # https://datatracker.ietf.org/doc/html/rfc8448#page-5
     def test_should_return_server_hello_message_header(self):
