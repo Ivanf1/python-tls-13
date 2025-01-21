@@ -1,4 +1,10 @@
+import base64
+import binascii
+
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 
 from src.messages.certificate_message import CertificateMessage
 from src.messages.certificate_message_builder import CertificateMessageBuilder
@@ -16,7 +22,7 @@ from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_ea
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
     get_server_handshake_iv, compute_new_nonce, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_client_application_iv, get_server_application_key, \
-    get_server_application_iv
+    get_server_application_iv, validate_certificate_verify_signature
 from src.tls_fsm import TlsFsm, TlsFsmEvent, TlsFsmState
 from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
@@ -165,15 +171,27 @@ class TlsSession:
 
     def _on_certificate_received_fsm_transaction(self, ctx):
         # TODO: validate the certificate
-        self.certificate_message = CertificateMessageBuilder.build_from_bytes(ctx)
+        self.certificate_message = CertificateMessageBuilder.build_from_bytes(ctx[5:])
         return True
 
     def _on_certificate_verify_received_fsm_transaction(self, ctx):
-        self.certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx)
-        return True
+        self.certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx[5:])
+
+        # TODO: [:-1] needs to be fixed!
+        certificate = x509.load_der_x509_certificate(self.certificate_message.certificate[:-1], default_backend())
+
+        public_key = certificate.public_key()
+
+        handshake_hash = get_records_hash_sha256(
+            self.client_hello.to_bytes(),
+            self.server_hello.to_bytes(),
+            self.certificate_message.to_bytes(),
+        )
+
+        return validate_certificate_verify_signature(handshake_hash, public_key, self.certificate_verify_message.signature)
 
     def _on_finished_received_fsm_transaction(self, ctx):
-        self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx)
+        self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx[5:])
 
         derived_secret = get_derived_secret(self.handshake_secret)
         master_secret = get_master_secret(derived_secret)
