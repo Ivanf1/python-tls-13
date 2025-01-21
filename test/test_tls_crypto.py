@@ -1,5 +1,7 @@
 import binascii
+import os
 import unittest
+from os import path
 
 from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_zero_bytes, hkdf_extract, \
     get_early_secret, get_empty_hash_256, hkdf_expand_label, get_derived_secret, get_handshake_secret, \
@@ -415,14 +417,15 @@ class TestTLSCrypto(unittest.TestCase):
     def test_should_compute_certificate_verify_message_signature(self):
         handshake_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
          d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
-        signature = get_certificate_verify_signature(handshake_hash, f"../test/data/private_key.pem")
-        print(binascii.hexlify(signature))
+        private_key_path = path.join(os.path.dirname(os.path.abspath(__file__)), "data", "private_key.pem")
+        signature = get_certificate_verify_signature(handshake_hash, private_key_path)
         self.assertIs(len(signature), 256)
 
     def test_should_validate_certificate_verify_signature_valid(self):
         handshake_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
          d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
-        with open(f"./data/server.pub", "rb") as key_file:
+        key_file_path = path.join(os.path.dirname(os.path.abspath(__file__)), "data", "server.pub")
+        with open(key_file_path, "rb") as key_file:
             public_key = serialization.load_pem_public_key(
                 key_file.read()
             )
@@ -434,7 +437,8 @@ class TestTLSCrypto(unittest.TestCase):
     def test_should_not_validate_certificate_verify_signature_invalid(self):
         handshake_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
          d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d9""")
-        with open(f"./data/server.pub", "rb") as key_file:
+        key_file_path = path.join(os.path.dirname(os.path.abspath(__file__)), "data", "server.pub")
+        with open(key_file_path, "rb") as key_file:
             public_key = serialization.load_pem_public_key(
                 key_file.read()
             )
