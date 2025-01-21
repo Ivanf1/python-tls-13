@@ -6,17 +6,19 @@ from src.fsm import FSM
 class TlsFsmState(Enum):
     START = 0,
     WAIT_SERVER_HELLO = 1,
-    WAIT_CERTIFICATE = 2,
-    WAIT_CERTIFICATE_VERIFY = 3,
-    WAIT_FINISHED = 4,
-    CONNECTED = 5
+    WAIT_ENCRYPTED_EXTENSIONS = 2,
+    WAIT_CERTIFICATE = 3,
+    WAIT_CERTIFICATE_VERIFY = 4,
+    WAIT_FINISHED = 5,
+    CONNECTED = 6
 
 class TlsFsmEvent(Enum):
     SESSION_BEGIN = 0,
     SERVER_HELLO_RECEIVED = 1,
-    CERTIFICATE_RECEIVED = 2,
-    CERTIFICATE_VERIFY_RECEIVED = 3,
-    FINISHED_RECEIVED = 4
+    ENCRYPTED_EXTENSIONS_RECEIVED = 2,
+    CERTIFICATE_RECEIVED = 3,
+    CERTIFICATE_VERIFY_RECEIVED = 4,
+    FINISHED_RECEIVED = 5
 
 
 class TlsFsm(FSM):
@@ -24,6 +26,7 @@ class TlsFsm(FSM):
             self,
             on_session_begin_transaction_cb = None,
             on_server_hello_received_cb = None,
+            on_encrypted_extensions_received_cb = None,
             on_certificate_received_cb = None,
             on_certificate_verify_received_cb = None,
             on_finished_received_cb = None
@@ -33,7 +36,8 @@ class TlsFsm(FSM):
 
         tls_table = {
             (TlsFsmState.START, TlsFsmEvent.SESSION_BEGIN): (TlsFsmState.WAIT_SERVER_HELLO, on_session_begin_transaction_cb),
-            (TlsFsmState.WAIT_SERVER_HELLO, TlsFsmEvent.SERVER_HELLO_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE, on_server_hello_received_cb),
+            (TlsFsmState.WAIT_SERVER_HELLO, TlsFsmEvent.SERVER_HELLO_RECEIVED): (TlsFsmState.WAIT_ENCRYPTED_EXTENSIONS, on_server_hello_received_cb),
+            (TlsFsmState.WAIT_ENCRYPTED_EXTENSIONS, TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE, on_encrypted_extensions_received_cb),
             (TlsFsmState.WAIT_CERTIFICATE, TlsFsmEvent.CERTIFICATE_RECEIVED): (TlsFsmState.WAIT_CERTIFICATE_VERIFY, on_certificate_received_cb),
             (TlsFsmState.WAIT_CERTIFICATE_VERIFY, TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED): (TlsFsmState.WAIT_FINISHED, on_certificate_verify_received_cb),
             (TlsFsmState.WAIT_FINISHED, TlsFsmEvent.FINISHED_RECEIVED): (TlsFsmState.CONNECTED, on_finished_received_cb),

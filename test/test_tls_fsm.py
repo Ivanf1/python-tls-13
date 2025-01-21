@@ -12,6 +12,7 @@ class TestTlsFsm(unittest.TestCase):
 
         self.on_session_begin_transaction_cb = Mock(return_value=True)
         self.on_server_hello_received_cb = Mock(return_value=True)
+        self.on_encrypted_extensions_received_cb = Mock(return_value=True)
         self.on_certificate_received_cb = Mock(return_value=True)
         self.on_certificate_verify_received_cb = Mock(return_value=True)
         self.on_finished_received_cb = Mock(return_value=True)
@@ -19,6 +20,7 @@ class TestTlsFsm(unittest.TestCase):
         self.tls_fsm = TlsFsm(
             self.on_session_begin_transaction_cb,
             self.on_server_hello_received_cb,
+            self.on_encrypted_extensions_received_cb,
             self.on_certificate_received_cb,
             self.on_certificate_verify_received_cb,
             self.on_finished_received_cb
@@ -42,10 +44,10 @@ class TestTlsFsm(unittest.TestCase):
     def test_should_not_proceed_to_next_state_if_event_invalid_for_current_state(self):
         self.assertRaises(FSMInvalidEventForStateError, self.tls_fsm.transition, TlsFsmEvent.SERVER_HELLO_RECEIVED)
 
-    def test_should_proceed_to_wait_certificate_state(self):
+    def test_should_proceed_to_wait_encrypted_extensions_state(self):
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
         self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
-        self.assertEqual(self.tls_fsm.get_current_state(), TlsFsmState.WAIT_CERTIFICATE)
+        self.assertEqual(self.tls_fsm.get_current_state(), TlsFsmState.WAIT_ENCRYPTED_EXTENSIONS)
 
     def test_should_call_on_server_hello_received_with_context(self):
         ctx = "shr ctx"
@@ -53,9 +55,23 @@ class TestTlsFsm(unittest.TestCase):
         self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED, ctx)
         self.on_server_hello_received_cb.assert_called_with(ctx)
 
+    def test_should_proceed_to_wait_certificate_state(self):
+        self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
+        self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED)
+        self.assertEqual(self.tls_fsm.get_current_state(), TlsFsmState.WAIT_CERTIFICATE)
+
+    def test_should_call_on_encrypted_extensions_received_with_context(self):
+        ctx = "cr ctx"
+        self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
+        self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED, ctx)
+        self.on_encrypted_extensions_received_cb.assert_called_with(ctx)
+
     def test_should_proceed_to_wait_certificate_verify_state(self):
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
         self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED)
         self.assertEqual(self.tls_fsm.get_current_state(), TlsFsmState.WAIT_CERTIFICATE_VERIFY)
 
@@ -63,12 +79,14 @@ class TestTlsFsm(unittest.TestCase):
         ctx = "cr ctx"
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
         self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED, ctx)
         self.on_certificate_received_cb.assert_called_with(ctx)
 
     def test_should_proceed_to_wait_finished_state(self):
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
         self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED)
         self.assertEqual(self.tls_fsm.get_current_state(), TlsFsmState.WAIT_FINISHED)
@@ -77,6 +95,7 @@ class TestTlsFsm(unittest.TestCase):
         ctx = "cvr ctx"
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
         self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED, ctx)
         self.on_certificate_verify_received_cb.assert_called_with(ctx)
@@ -84,6 +103,7 @@ class TestTlsFsm(unittest.TestCase):
     def test_should_proceed_to_connected_state(self):
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
         self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.FINISHED_RECEIVED)
@@ -93,6 +113,7 @@ class TestTlsFsm(unittest.TestCase):
         ctx = "fr ctx"
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
         self.tls_fsm.transition(TlsFsmEvent.SERVER_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED)
         self.tls_fsm.transition(TlsFsmEvent.FINISHED_RECEIVED, ctx)

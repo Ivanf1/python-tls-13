@@ -8,6 +8,7 @@ class RecordHeaderType(Enum):
 class HandshakeMessageType(Enum):
     CLIENT_HELLO = b'\x01'
     SERVER_HELLO = b'\x02'
+    ENCRYPTED_EXTENSIONS = b'\x08'
     CERTIFICATE = b'\x0b'
     CERTIFICATE_VERIFY = b'\x0f'
     FINISHED = b'\x14'

@@ -1,9 +1,5 @@
-import base64
-import binascii
-
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 
 from src.messages.certificate_message import CertificateMessage
@@ -12,6 +8,8 @@ from src.messages.certificate_verify_message import CertificateVerifyMessage
 from src.messages.certificate_verify_message_builder import CertificateVerifyMessageBuilder
 from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
+from src.messages.encrypted_extensions_message import EncryptedExtensionsMessage
+from src.messages.encrypted_extensions_message_builder import EncryptedExtensionsMessageBuilder
 from src.messages.handshake_finished_message import HandshakeFinishedMessage
 from src.messages.handshake_finished_message_builder import HandshakeFinishedMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
@@ -40,6 +38,7 @@ class TlsSession:
 
     client_hello: ClientHelloMessage or None = None
     server_hello: ServerHelloMessage or None = None
+    encrypted_extensions: EncryptedExtensionsMessage or None = None
     certificate_message: CertificateMessage or None = None
     certificate_verify_message: CertificateVerifyMessage or None = None
     server_finished_message: HandshakeFinishedMessage or None = None
@@ -58,6 +57,7 @@ class TlsSession:
         self.tls_fsm = TlsFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
             on_server_hello_received_cb=self._on_server_hello_received_fsm_transaction,
+            on_encrypted_extensions_received_cb=self._on_encrypted_extensions_fsm_transaction,
             on_certificate_received_cb=self._on_certificate_received_fsm_transaction,
             on_certificate_verify_received_cb=self._on_certificate_verify_received_fsm_transaction,
             on_finished_received_cb=self._on_finished_received_fsm_transaction
@@ -83,6 +83,7 @@ class TlsSession:
         record_type = RecordManager.get_record_type(record)
 
         encrypted_handshake_states = [
+            TlsFsmState.WAIT_ENCRYPTED_EXTENSIONS,
             TlsFsmState.WAIT_CERTIFICATE,
             TlsFsmState.WAIT_CERTIFICATE_VERIFY,
             TlsFsmState.WAIT_FINISHED,
@@ -132,6 +133,8 @@ class TlsSession:
         match message_type:
             case HandshakeMessageType.SERVER_HELLO:
                 event = TlsFsmEvent.SERVER_HELLO_RECEIVED
+            case HandshakeMessageType.ENCRYPTED_EXTENSIONS:
+                event = TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED
             case HandshakeMessageType.CERTIFICATE:
                 event = TlsFsmEvent.CERTIFICATE_RECEIVED
             case HandshakeMessageType.CERTIFICATE_VERIFY:
@@ -169,6 +172,10 @@ class TlsSession:
         self.server_handshake_iv = get_server_handshake_iv(server_secret)
         return True
 
+    def _on_encrypted_extensions_fsm_transaction(self, ctx):
+        self.encrypted_extensions = EncryptedExtensionsMessageBuilder.build_from_bytes(ctx[5:])
+        return True
+
     def _on_certificate_received_fsm_transaction(self, ctx):
         # TODO: validate the certificate
         self.certificate_message = CertificateMessageBuilder.build_from_bytes(ctx[5:])
@@ -185,6 +192,7 @@ class TlsSession:
         handshake_hash = get_records_hash_sha256(
             self.client_hello.to_bytes(),
             self.server_hello.to_bytes(),
+            self.encrypted_extensions.to_bytes(),
             self.certificate_message.to_bytes(),
         )
 
@@ -199,6 +207,7 @@ class TlsSession:
         handshake_hash = get_records_hash_sha256(
             self.client_hello.to_bytes(),
             self.server_hello.to_bytes(),
+            self.encrypted_extensions.to_bytes(),
             self.certificate_message.to_bytes(),
             self.certificate_verify_message.to_bytes(),
             self.server_finished_message.to_bytes(),
