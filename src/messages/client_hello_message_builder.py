@@ -2,12 +2,11 @@ from src.messages.client_hello_message import ClientHelloMessage
 from src.tls_crypto import get_32_random_bytes
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
-from src.utils import TLSVersion, SignatureAlgorithms, CipherSuites, KeyExchangeGroups
+from src.utils import TLSVersion, SignatureAlgorithms, CipherSuites, KeyExchangeGroups, HandshakeMessageType
 
 
 class ClientHelloMessageBuilder:
     def __init__(self, server_name, public_key: X25519PublicKey):
-        self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO = b'\x01'
         self.client_random = get_32_random_bytes()
         self.server_name = server_name
         self.public_key = public_key
@@ -16,7 +15,7 @@ class ClientHelloMessageBuilder:
         # ClientHello message starts with a type and a length
         data_len = len(data)
         data_len_bytes = data_len.to_bytes(3, byteorder='big')
-        return self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO + data_len_bytes
+        return HandshakeMessageType.CLIENT_HELLO.value + data_len_bytes
 
     @staticmethod
     def get_supported_cipher_suites():
@@ -84,7 +83,7 @@ class ClientHelloMessageBuilder:
         payload_len = len(b''.join(hello_data)) + extensions_len + 2
 
         return ClientHelloMessage(
-            self.HANDSHAKE_MESSAGE_TYPE_CLIENT_HELLO,
+            HandshakeMessageType.CLIENT_HELLO.value,
             payload_len.to_bytes(3),
             *hello_data,
             extensions_len.to_bytes(2),

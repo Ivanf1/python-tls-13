@@ -1,9 +1,9 @@
 from src.messages.certificate_message import CertificateMessage
+from src.utils import HandshakeMessageType
 
 
 class CertificateMessageBuilder:
     def __init__(self, certificate):
-        self.HANDSHAKE_MESSAGE_TYPE_CERTIFICATE = b'\x0b'
         self.REQUEST_CONTEXT = b'\x00'
         self.certificate = certificate
 
@@ -38,7 +38,7 @@ class CertificateMessageBuilder:
         payload_length = len(self.REQUEST_CONTEXT) + certificates_length + 3
 
         return CertificateMessage(
-            self.HANDSHAKE_MESSAGE_TYPE_CERTIFICATE,
+            HandshakeMessageType.CERTIFICATE.value,
             payload_length.to_bytes(3),
             self.REQUEST_CONTEXT,
             certificates_length.to_bytes(3),

@@ -1,15 +1,12 @@
-import binascii
-
 from src.messages.server_hello_message import ServerHelloMessage
 from src.tls_crypto import get_32_random_bytes
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
-from src.utils import TLSVersion, CipherSuites, KeyExchangeGroups
+from src.utils import TLSVersion, CipherSuites, KeyExchangeGroups, HandshakeMessageType
 
 
 class ServerHelloMessageBuilder:
     def __init__(self, public_key: X25519PublicKey):
-        self.HANDSHAKE_MESSAGE_TYPE_SERVER_HELLO = b'\x02'
         self.server_random = get_32_random_bytes()
         self.public_key = public_key
 
@@ -17,7 +14,7 @@ class ServerHelloMessageBuilder:
         # ServerHello message starts with a type and a length
         data_len = len(data)
         data_len_bytes = data_len.to_bytes(3, byteorder='big')
-        return self.HANDSHAKE_MESSAGE_TYPE_SERVER_HELLO + data_len_bytes
+        return HandshakeMessageType.SERVER_HELLO.value + data_len_bytes
 
     @staticmethod
     def get_supported_cipher_suites():
@@ -66,7 +63,7 @@ class ServerHelloMessageBuilder:
         payload_len = len(b''.join(hello_data)) + extensions_len + 2
 
         return ServerHelloMessage(
-            self.HANDSHAKE_MESSAGE_TYPE_SERVER_HELLO,
+            HandshakeMessageType.SERVER_HELLO.value,
             payload_len.to_bytes(3),
             *hello_data,
             extensions_len.to_bytes(2),

@@ -1,11 +1,10 @@
 from src.messages.certificate_verify_message import CertificateVerifyMessage
 from src.tls_crypto import get_certificate_verify_signature
-from src.utils import SignatureAlgorithms
+from src.utils import SignatureAlgorithms, HandshakeMessageType
 
 
 class CertificateVerifyMessageBuilder:
     def __init__(self, private_key_path: str):
-        self.HANDSHAKE_MESSAGE_TYPE_CERTIFICATE_VERIFY = b'\x0f'
         self.private_key_path = private_key_path
 
     def get_certificate_verify_message(self, handshake_hash, private_key_path):
@@ -15,7 +14,7 @@ class CertificateVerifyMessageBuilder:
         payload_len = (signature_len + 2 + 2).to_bytes(3)
 
         return CertificateVerifyMessage(
-            self.HANDSHAKE_MESSAGE_TYPE_CERTIFICATE_VERIFY,
+            HandshakeMessageType.CERTIFICATE_VERIFY.value,
             payload_len,
             SignatureAlgorithms.RSA_PSS_RSAE_SHA256.value,
             signature_len.to_bytes(2),

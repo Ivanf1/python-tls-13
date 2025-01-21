@@ -2,8 +2,6 @@ from src.messages.encrypted_extensions_message import EncryptedExtensionsMessage
 
 
 class EncryptedExtensionsMessageBuilder:
-    def __init__(self):
-        self.HANDSHAKE_MESSAGE_TYPE_ENCRYPTED_EXTENSIONS = b'\x08'
 
     @staticmethod
     def build_from_bytes(message_bytes: bytes):
