@@ -1,3 +1,4 @@
+import base64
 import binascii
 import unittest
 
@@ -8,13 +9,13 @@ from src.tls_crypto import get_X25519_private_key, get_32_random_bytes, get_32_z
     get_client_handshake_iv, get_server_handshake_iv, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_server_application_key, get_client_application_iv, \
     get_server_application_iv, get_finished_secret, get_hash_sha256, get_hmac_sha256, encrypt, decrypt, \
-    get_records_hash_sha256, compute_new_nonce, get_certificate_verify_signature
+    get_records_hash_sha256, compute_new_nonce, get_certificate_verify_signature, validate_certificate_verify_signature
 from src.tls_crypto import get_X25519_public_key
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
-from src.utils import RecordHeaderType
+from cryptography.hazmat.primitives import serialization
 
 
 class TestTLSCrypto(unittest.TestCase):
@@ -386,7 +387,7 @@ class TestTLSCrypto(unittest.TestCase):
         self.assertEqual(message, expected_message)
 
     def test_should_return_hash_of_records(self):
-        client_hello = bytes.fromhex("""16 03 01 00 c4 01 00 00 c0 03 03 cb
+        client_hello = bytes.fromhex("""01 00 00 c0 03 03 cb
          34 ec b1 e7 81 63 ba 1c 38 c6 da cb 19 6a 6d ff a2 1a 8d 99 12
          ec 18 a2 ef 62 83 02 4d ec e7 00 00 06 13 01 13 03 13 02 01 00
          00 91 00 00 00 0b 00 09 00 00 06 73 65 72 76 65 72 ff 01 00 01
@@ -396,7 +397,7 @@ class TestTLSCrypto(unittest.TestCase):
          54 13 69 1e 52 9a af 2c 00 2b 00 03 02 03 04 00 0d 00 20 00 1e
          04 03 05 03 06 03 02 03 08 04 08 05 08 06 04 01 05 01 06 01 02
          01 04 02 05 02 06 02 02 02 00 2d 00 02 01 01 00 1c 00 02 40 01""")
-        server_hello = bytes.fromhex("""16 03 03 00 5a 02 00 00 56 03 03 a6
+        server_hello = bytes.fromhex("""02 00 00 56 03 03 a6
          af 06 a4 12 18 60 dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14
          34 da c1 55 77 2e d3 e2 69 28 00 13 01 00 00 2e 00 33 00 24 00
          1d 00 20 c9 82 88 76 11 20 95 fe 66 76 2b db f7 c6 72 e1 56 d6
@@ -413,5 +414,32 @@ class TestTLSCrypto(unittest.TestCase):
         self.assertEqual(new_iv, expected_new_iv)
 
     def test_should_compute_certificate_verify_message_signature(self):
-        signature = get_certificate_verify_signature(b'', f"../test/data/private_key.pem")
+        handshake_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
+         d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
+        signature = get_certificate_verify_signature(handshake_hash, f"../test/data/private_key.pem")
+        print(binascii.hexlify(signature))
         self.assertIs(len(signature), 256)
+
+    def test_should_validate_certificate_verify_signature_valid(self):
+        handshake_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
+         d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d8""")
+        with open(f"./data/server.pub", "rb") as key_file:
+            public_key = serialization.load_pem_public_key(
+                key_file.read()
+            )
+            signature = bytes.fromhex("""37cd62958c6aeab8bfc6d206401fcabef7ecdce3c1a20d29577eab6f8118834297e475beee316499ebc396f4a337cd7a1f83089d14d0ca136bc0204d984e897a149cc4b7dc34a3f81ff39aef126f5875944f563a6f129f8b2a003bbc255c0091e191282e1f45b0064beaa559bc0a17c3dec60b575970af06f2702a87217aa628e65edf3635550d5b9fc4a61559287abdd3a9b8ec36e3a0f35fb118d8869ed0f3f8daa40fb4147b3edea6717e1d09a87b460a24fcea2ec2293528d8ae353ad8c4e63a242571ed8e57c1ae01a0d836d87d391cf26e801254c452e2aa5d82a8584558f5a32cb361991c850a91b5861a0845d56d39fbbd702a545d2419187ae546a2""")
+
+            verified = validate_certificate_verify_signature(handshake_hash, public_key, signature)
+            self.assertTrue(verified)
+
+    def test_should_not_validate_certificate_verify_signature_invalid(self):
+        handshake_hash = bytes.fromhex("""86 0c 06 ed c0 78 58 ee 8e 78 f0 e7 42 8c 58 ed
+         d6 b4 3f 2c a3 e6 e9 5f 02 ed 06 3c f0 e1 ca d9""")
+        with open(f"./data/server.pub", "rb") as key_file:
+            public_key = serialization.load_pem_public_key(
+                key_file.read()
+            )
+            signature = bytes.fromhex("""37cd62958c6aeab8bfc6d206401fcabef7ecdce3c1a20d29577eab6f8118834297e475beee316499ebc396f4a337cd7a1f83089d14d0ca136bc0204d984e897a149cc4b7dc34a3f81ff39aef126f5875944f563a6f129f8b2a003bbc255c0091e191282e1f45b0064beaa559bc0a17c3dec60b575970af06f2702a87217aa628e65edf3635550d5b9fc4a61559287abdd3a9b8ec36e3a0f35fb118d8869ed0f3f8daa40fb4147b3edea6717e1d09a87b460a24fcea2ec2293528d8ae353ad8c4e63a242571ed8e57c1ae01a0d836d87d391cf26e801254c452e2aa5d82a8584558f5a32cb361991c850a91b5861a0845d56d39fbbd702a545d2419187ae546a2""")
+
+            verified = validate_certificate_verify_signature(handshake_hash, public_key, signature)
+            self.assertFalse(verified)

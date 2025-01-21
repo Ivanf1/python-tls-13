@@ -30,7 +30,7 @@ def get_hash_sha256(data):
     return hashlib.sha256(data).digest()
 
 def get_records_hash_sha256(*records):
-    data = b''.join([record[5:] for record in records])
+    data = b''.join([record for record in records])
     return get_hash_sha256(data)
 
 def get_hmac_sha256(message, secret_key):
@@ -264,3 +264,25 @@ def get_certificate_verify_signature(handshake_hash, private_key_path):
         )
 
         return signature
+
+def validate_certificate_verify_signature(handshake_hash, public_key, signature):
+    context_string = b'TLS 1.3, server CertificateVerify'
+
+    # 64 bytes of 0x20 (space)
+    prefix = b"\x20" * 64
+
+    data_to_sign = prefix + context_string + b"\x00" + handshake_hash
+
+    try:
+        public_key.verify(
+            signature,
+            data_to_sign,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256(),
+        )
+        return True
+    except:
+        return False
