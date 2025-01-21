@@ -43,8 +43,9 @@ class TlsSession:
     certificate_verify_message: CertificateVerifyMessage or None = None
     server_finished_message: HandshakeFinishedMessage or None = None
 
-    def __init__(self, server_name):
+    def __init__(self, server_name, on_connected):
         self.server_name = server_name
+        self.on_connected = on_connected
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
 
@@ -220,4 +221,6 @@ class TlsSession:
         self.client_application_iv = get_client_application_iv(client_secret)
         self.server_application_key = get_server_application_key(server_secret)
         self.server_application_iv = get_server_application_iv(server_secret)
+
+        self.on_connected()
         return True
