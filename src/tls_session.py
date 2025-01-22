@@ -185,8 +185,7 @@ class TlsSession:
     def _on_certificate_verify_received_fsm_transaction(self, ctx):
         self.certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx[5:])
 
-        # TODO: [:-1] needs to be fixed!
-        certificate = x509.load_der_x509_certificate(self.certificate_message.certificate[:-1], default_backend())
+        certificate = x509.load_der_x509_certificate(self.certificate_message.certificate, default_backend())
 
         public_key = certificate.public_key()
 

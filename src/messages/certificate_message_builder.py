@@ -60,8 +60,11 @@ class CertificateMessageBuilder:
         request_context = message_bytes[4:5]
         certificates_length = message_bytes[5:8]
         certificate_length = message_bytes[8:11]
-        certificate = message_bytes[11:-2]
-        certificate_extensions = message_bytes[-2:]
+
+        bytes_of_certificate = int.from_bytes(certificate_length)
+
+        certificate = message_bytes[11:11 + bytes_of_certificate]
+        certificate_extensions = message_bytes[11 + bytes_of_certificate:]
 
         return CertificateMessage(
             handshake_message_type=handshake_message_type,
