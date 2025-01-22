@@ -43,11 +43,14 @@ class TlsSession:
     certificate_verify_message: CertificateVerifyMessage or None = None
     server_finished_message: HandshakeFinishedMessage or None = None
 
-    def __init__(self, server_name, on_connected):
+    server_certificate = None
+
+    def __init__(self, server_name: str, on_connected, trusted_root_certificate_path: str):
         self.server_name = server_name
         self.on_connected = on_connected
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
+        self.trusted_root_certificate_path = trusted_root_certificate_path
 
         self.derived_secret: bytes or None = None
         self.handshake_secret: bytes or None = None
@@ -178,16 +181,24 @@ class TlsSession:
         return True
 
     def _on_certificate_received_fsm_transaction(self, ctx):
-        # TODO: validate the certificate
         self.certificate_message = CertificateMessageBuilder.build_from_bytes(ctx[5:])
-        return True
+
+        with open(self.trusted_root_certificate_path, "rb") as cert_file:
+            trusted_root_certificate = x509.load_der_x509_certificate(cert_file.read(), default_backend())
+
+        self.server_certificate = x509.load_der_x509_certificate(self.certificate_message.certificate, default_backend())
+
+        try:
+            self.server_certificate.verify_directly_issued_by(trusted_root_certificate)
+            # TODO: validate the certificate validity period
+            return True
+        except:
+            return False
 
     def _on_certificate_verify_received_fsm_transaction(self, ctx):
         self.certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx[5:])
 
-        certificate = x509.load_der_x509_certificate(self.certificate_message.certificate, default_backend())
-
-        public_key = certificate.public_key()
+        public_key = self.server_certificate.public_key()
 
         handshake_hash = get_records_hash_sha256(
             self.client_hello.to_bytes(),

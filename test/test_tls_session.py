@@ -1,4 +1,5 @@
 import unittest
+from os import path
 from unittest.mock import patch, PropertyMock, Mock
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
@@ -12,7 +13,8 @@ from src.tls_session import TlsSession
 class TestTlsSession(unittest.TestCase):
     def setUp(self):
         self.on_connected = Mock()
-        self.tls_session = TlsSession("example.com", self.on_connected)
+        self.root_certificate_path = path.join(path.dirname(path.abspath(__file__)), "data", "ca_cert.der")
+        self.tls_session = TlsSession("example.com", self.on_connected, self.root_certificate_path)
         self.server_hello = bytes.fromhex("""16 03 03 00 5a 02 00 00 56 03 03 a6 af 06 a4 12 18 60
          dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
          d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
@@ -31,7 +33,7 @@ class TestTlsSession(unittest.TestCase):
     # section: {server}  send handshake record
     def test_should_call_transition_on_server_hello_message_received(self):
         with patch.object(TlsFsm, "transition") as mock_transition:
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.on_record_received(self.server_hello)
             mock_transition.assert_called_with(TlsFsmEvent.SERVER_HELLO_RECEIVED, self.server_hello)
 
@@ -52,7 +54,7 @@ class TestTlsSession(unittest.TestCase):
             mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.return_value = bytes.fromhex("""9563bc8b590f671f488d2da3""")
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -68,7 +70,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
             ]
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -101,15 +103,17 @@ class TestTlsSession(unittest.TestCase):
 
     def test_should_store_certificate_verify_message_on_certificate_verify_message_received(self):
         with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
-                patch("src.tls_session.compute_new_nonce") as mock_handshake_iv:
+                patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
+                patch.object(TlsSession, "server_certificate", new_callable=PropertyMock) as mock_validate_certificate_issued_by:
             mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
                 bytes.fromhex("""9563bc8b590f671f488d2da3"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da1"""),
             ]
+            mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -121,7 +125,8 @@ class TestTlsSession(unittest.TestCase):
     def test_should_store_handshake_finished_message_on_handshake_finished_message_received(self):
         with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
                 patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
-                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature:
+                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature, \
+                patch.object(TlsSession, "server_certificate", new_callable=PropertyMock) as mock_validate_certificate_issued_by:
             mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
                 bytes.fromhex("""9563bc8b590f671f488d2da3"""),
@@ -130,8 +135,9 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
             ]
             mock_validate_signature.return_value = True
+            mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -144,7 +150,8 @@ class TestTlsSession(unittest.TestCase):
     def test_should_call_on_connected_on_handshake_finished_message_received(self):
         with patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
                 patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
-                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature:
+                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature, \
+                patch.object(TlsSession, "server_certificate", new_callable=PropertyMock) as mock_validate_certificate_issued_by:
             mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
                 bytes.fromhex("""9563bc8b590f671f488d2da3"""),
@@ -153,10 +160,11 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
             ]
             mock_validate_signature.return_value = True
+            mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
 
             on_connected = Mock()
 
-            session = TlsSession("example.com", on_connected)
+            session = TlsSession("example.com", on_connected, self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -171,7 +179,8 @@ class TestTlsSession(unittest.TestCase):
             patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
             patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
             patch.object(TlsSession,"client_hello", new_callable=PropertyMock) as client_hello, \
-            patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature:
+            patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature, \
+            patch.object(TlsSession, "server_certificate", new_callable=PropertyMock) as mock_validate_certificate_issued_by:
             mock_handshake_key.return_value = bytes.fromhex(
                 """9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
@@ -183,13 +192,14 @@ class TestTlsSession(unittest.TestCase):
             mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
             mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
             mock_validate_signature.return_value = True
+            mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
             client_hello.return_value = ClientHelloMessageBuilder.build_from_bytes(bytes.fromhex("""
                 01 00 00 f4 03 03 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 
                 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 00 08 13 01 00 a3 00 00 00 18 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 
                 75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
                 72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -205,7 +215,8 @@ class TestTlsSession(unittest.TestCase):
                 patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
                 patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
                 patch.object(TlsSession,"client_hello", new_callable=PropertyMock) as client_hello, \
-                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature:
+                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature, \
+                patch.object(TlsSession, "server_certificate", new_callable=PropertyMock) as mock_validate_certificate_issued_by:
             mock_handshake_key.return_value = bytes.fromhex(
                 """9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
@@ -217,13 +228,14 @@ class TestTlsSession(unittest.TestCase):
             mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
             mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
             mock_validate_signature.return_value = True
+            mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
             client_hello.return_value = ClientHelloMessageBuilder.build_from_bytes(bytes.fromhex("""
                 01 00 00 f4 03 03 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 
                 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 00 08 13 01 00 a3 00 00 00 18 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 
                 75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
                 72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -239,7 +251,8 @@ class TestTlsSession(unittest.TestCase):
                 patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
                 patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
                 patch.object(TlsSession,"client_hello", new_callable=PropertyMock) as client_hello, \
-                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature:
+                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature, \
+                patch.object(TlsSession, "server_certificate", new_callable=PropertyMock) as mock_validate_certificate_issued_by:
             mock_handshake_key.return_value = bytes.fromhex(
                 """9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
@@ -251,13 +264,14 @@ class TestTlsSession(unittest.TestCase):
             mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
             mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
             mock_validate_signature.return_value = True
+            mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
             client_hello.return_value = ClientHelloMessageBuilder.build_from_bytes(bytes.fromhex("""
                 01 00 00 f4 03 03 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 
                 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 00 08 13 01 00 a3 00 00 00 18 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 
                 75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
                 72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -273,7 +287,8 @@ class TestTlsSession(unittest.TestCase):
                 patch.object(TlsSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
                 patch("src.tls_session.compute_new_nonce") as mock_handshake_iv, \
                 patch.object(TlsSession,"client_hello", new_callable=PropertyMock) as client_hello, \
-                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature:
+                patch("src.tls_session.validate_certificate_verify_signature") as mock_validate_signature, \
+            patch.object(TlsSession, "server_certificate", new_callable=PropertyMock) as mock_validate_certificate_issued_by:
             mock_handshake_key.return_value = bytes.fromhex(
                 """9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.side_effect = [
@@ -285,13 +300,14 @@ class TestTlsSession(unittest.TestCase):
             mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
             mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
             mock_validate_signature.return_value = True
+            mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
             client_hello.return_value = ClientHelloMessageBuilder.build_from_bytes(bytes.fromhex("""
                 01 00 00 f4 03 03 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 
                 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 00 08 13 01 00 a3 00 00 00 18 00 16 00 00 13 65 78 61 6d 70 6c 65 2e 
                 75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
                 72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -312,7 +328,7 @@ class TestTlsSession(unittest.TestCase):
 
             on_application_message_callback = Mock()
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.register_on_application_record_callback(on_application_message_callback)
             session.start()
             session.on_record_received(bytes.fromhex("""17 03 03 00 ea 38 ad fb 1d 01 fd 95 a6 03 85 e8 bb f1 fd 8d cb 46 70 98 97 e7 d6 74 
@@ -342,7 +358,7 @@ class TestTlsSession(unittest.TestCase):
 
             on_application_message_callback = Mock()
 
-            session = TlsSession("example.com", Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path)
             session.register_on_application_record_callback(on_application_message_callback)
             session.start()
             session.on_record_received(bytes.fromhex("""17 03 03 00 15 0c da 85 f1 44 7a e2 3f a6 6d 56 f4 c5 40 84 82 
