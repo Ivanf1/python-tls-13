@@ -20,12 +20,14 @@ from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_ea
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
     get_server_handshake_iv, compute_new_nonce, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_client_application_iv, get_server_application_key, \
-    get_server_application_iv, validate_certificate_verify_signature
+    get_server_application_iv, validate_certificate_verify_signature, get_finished_secret, get_hmac_sha256
 from src.tls_fsm import TlsFsm, TlsFsmEvent, TlsFsmState
 from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
 
 class TlsSession:
+    client_secret: bytes or None = None
+
     client_handshake_key: bytes or None = None
     client_handshake_iv: bytes or None = None
     server_handshake_key: bytes or None = None
@@ -45,12 +47,13 @@ class TlsSession:
 
     server_certificate = None
 
-    def __init__(self, server_name: str, on_connected, trusted_root_certificate_path: str):
+    def __init__(self, server_name: str, on_connected, trusted_root_certificate_path: str, on_data_to_send):
         self.server_name = server_name
         self.on_connected = on_connected
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
         self.trusted_root_certificate_path = trusted_root_certificate_path
+        self.on_data_to_send = on_data_to_send
 
         self.derived_secret: bytes or None = None
         self.handshake_secret: bytes or None = None
@@ -224,13 +227,30 @@ class TlsSession:
             self.server_finished_message.to_bytes(),
         )
 
-        client_secret = get_client_secret_application(master_secret, handshake_hash)
+        self.client_secret = get_client_secret_application(master_secret, handshake_hash)
         server_secret = get_server_secret_application(master_secret, handshake_hash)
 
-        self.client_application_key = get_client_application_key(client_secret)
-        self.client_application_iv = get_client_application_iv(client_secret)
+        self.client_application_key = get_client_application_key(self.client_secret)
+        self.client_application_iv = get_client_application_iv(self.client_secret)
         self.server_application_key = get_server_application_key(server_secret)
         self.server_application_iv = get_server_application_iv(server_secret)
 
+        client_finished_record = self._build_client_handshake_finished(handshake_hash)
+
+        self.on_data_to_send(client_finished_record)
+
         self.on_connected()
         return True
+
+    def _build_client_handshake_finished(self, finished_hash):
+        finished_key = get_finished_secret(self.client_secret)
+        client_finished = HandshakeFinishedMessageBuilder().get_handshake_finished(finished_key, finished_hash)
+        client_finished_record = RecordManager.build_encrypted_record(
+            TLSVersion.V1_2,
+            RecordHeaderType.APPLICATION_DATA,
+            RecordHeaderType.HANDSHAKE,
+            client_finished.to_bytes(),
+            finished_key,
+            self.client_application_iv
+        )
+        return client_finished_record

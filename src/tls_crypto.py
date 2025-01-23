@@ -134,10 +134,16 @@ def get_server_handshake_iv(server_secret):
     ctx = b''
     return hkdf_expand_label(server_secret, label, ctx, 12)
 
-def get_finished_secret(server_secret_handshake):
+def get_finished_secret(secret):
+    """
+    Returns the finished secret (finished key)
+
+    :param secret: server_secret or client_secret
+    :return: the finished secret (finished key)
+    """
     label = b'finished'
     ctx = b''
-    return hkdf_expand_label(server_secret_handshake, label, ctx, 32)
+    return hkdf_expand_label(secret, label, ctx, 32)
 
 def get_master_secret(derived_secret):
     """
