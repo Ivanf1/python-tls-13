@@ -33,7 +33,7 @@ class TestTlsServerSession(unittest.TestCase):
         session = TlsServerSession(on_data_to_send, self.certificate_path)
         session.start()
         session.on_record_received(self.client_hello)
-        on_data_to_send.assert_called_once()
+        on_data_to_send.assert_called()
 
     def test_should_build_certificate_message_on_client_hello_received(self):
         session = TlsServerSession(Mock(), self.certificate_path)
@@ -41,3 +41,9 @@ class TestTlsServerSession(unittest.TestCase):
         session.on_record_received(self.client_hello)
         self.assertEqual(session.certificate_message.to_bytes()[0:1], HandshakeMessageType.CERTIFICATE.value)
 
+    def test_should_call_on_data_to_send_on_client_hello_received_send_certificate(self):
+        on_data_to_send = Mock()
+        session = TlsServerSession(on_data_to_send, self.certificate_path)
+        session.start()
+        session.on_record_received(self.client_hello)
+        self.assertEqual(on_data_to_send.call_count, 2)

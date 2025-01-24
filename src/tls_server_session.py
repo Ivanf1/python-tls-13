@@ -58,6 +58,8 @@ class TlsServerSession:
         certificate_bytes = certificate.public_bytes(encoding=Encoding.DER)
         self.certificate_message = CertificateMessageBuilder(certificate_bytes).get_certificate_message()
 
+        self.on_data_to_send(self.certificate_message)
+
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
