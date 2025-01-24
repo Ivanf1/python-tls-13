@@ -7,8 +7,8 @@ class CertificateVerifyMessageBuilder:
     def __init__(self, private_key_path: str):
         self.private_key_path = private_key_path
 
-    def get_certificate_verify_message(self, handshake_hash, private_key_path):
-        signature = get_certificate_verify_signature(handshake_hash, private_key_path)
+    def get_certificate_verify_message(self, handshake_hash):
+        signature = get_certificate_verify_signature(handshake_hash, self.private_key_path)
         signature_len = len(signature)
 
         payload_len = (signature_len + 2 + 2).to_bytes(3)

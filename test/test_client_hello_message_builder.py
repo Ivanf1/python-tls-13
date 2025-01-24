@@ -1,3 +1,4 @@
+import binascii
 import unittest
 from unittest.mock import patch
 
@@ -88,6 +89,7 @@ class TestClientHelloMessageBuilder(unittest.TestCase):
         expected_client_hello_message = bytes.fromhex(
             """0100007c03030000000000000000000000000000000000000000000000000000000000000000000213010054000000160000136578616d706c652e756c666865696d2e6e6574000a0002001d000d00020809002b0002030400330024001d0020"""
         ) + c.public_key.public_bytes_raw()
+        print(binascii.hexlify(expected_client_hello_message))
         self.assertEqual(client_hello_message, expected_client_hello_message)
 
     def test_should_build_client_hello_message_from_bytes_correct_handshake_message_type(self):

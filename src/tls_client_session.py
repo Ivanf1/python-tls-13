@@ -60,6 +60,7 @@ class TlsClientSession:
 
         self.handshake_messages_received = 0
         self.application_messages_received = 0
+        self.application_messages_sent = 0
 
         self.tls_fsm = TlsClientFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
@@ -84,6 +85,19 @@ class TlsClientSession:
             tls_version=TLSVersion.V1_0,
             record_type=RecordHeaderType.HANDSHAKE,
             message=self.client_hello.to_bytes()
+        )
+
+    def build_application_message(self, payload):
+        nonce = compute_new_nonce(self.client_application_iv, self.application_messages_sent)
+        self.application_messages_sent += 1
+
+        return RecordManager.build_encrypted_record(
+            TLSVersion.V1_2,
+            RecordHeaderType.APPLICATION_DATA,
+            RecordHeaderType.APPLICATION_DATA,
+            payload,
+            self.client_application_key,
+            nonce
         )
 
     def on_record_received(self, record):

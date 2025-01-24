@@ -1,6 +1,7 @@
 import unittest
 
 from src.messages.encrypted_extensions_message_builder import EncryptedExtensionsMessageBuilder
+from src.utils import HandshakeMessageType
 
 
 class TestEncryptedExtensionsMessageBuilder(unittest.TestCase):
@@ -27,7 +28,6 @@ class TestEncryptedExtensionsMessageBuilder(unittest.TestCase):
         expected_extensions = bytes.fromhex("")
         self.assertEqual(message.extensions, expected_extensions)
 
-    def test_should_build_encrypted_extensions_message(self):
+    def test_should_build_encrypted_extensions_message_correct_handshake_type(self):
         encrypted_extensions_message = EncryptedExtensionsMessageBuilder.get_encrypted_extensions_message()
-        expected_encrypted_extensions_message = bytes.fromhex("08 00 00 02 00 00")
-        self.assertEqual(encrypted_extensions_message, expected_encrypted_extensions_message)
+        self.assertEqual(encrypted_extensions_message.handshake_message_type, HandshakeMessageType.ENCRYPTED_EXTENSIONS.value)

@@ -11,10 +11,12 @@ class EncryptedExtensionsMessageBuilder:
 
         bytes_of_handshake_data = (len(extensions) + 2).to_bytes(3)
 
-        return HandshakeMessageType.ENCRYPTED_EXTENSIONS.value + \
-            bytes_of_handshake_data + \
-            extensions_len + \
-            extensions
+        return EncryptedExtensionsMessage(
+            handshake_message_type=HandshakeMessageType.ENCRYPTED_EXTENSIONS.value,
+            bytes_of_handshake_data=bytes_of_handshake_data,
+            bytes_of_extensions=extensions_len,
+            extensions=extensions
+        )
 
     @staticmethod
     def build_from_bytes(message_bytes: bytes):
