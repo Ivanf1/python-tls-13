@@ -21,11 +21,11 @@ from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_ea
     get_server_handshake_iv, compute_new_nonce, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_client_application_iv, get_server_application_key, \
     get_server_application_iv, validate_certificate_verify_signature, get_finished_secret, get_hmac_sha256
-from src.tls_fsm import TlsFsm, TlsFsmEvent, TlsFsmState
+from src.tls_client_fsm import TlsClientFsm, TlsClientFsmEvent, TlsClientFsmState
 from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
 
-class TlsSession:
+class TlsClientSession:
     client_secret: bytes or None = None
 
     client_handshake_key: bytes or None = None
@@ -61,7 +61,7 @@ class TlsSession:
         self.handshake_messages_received = 0
         self.application_messages_received = 0
 
-        self.tls_fsm = TlsFsm(
+        self.tls_fsm = TlsClientFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
             on_server_hello_received_cb=self._on_server_hello_received_fsm_transaction,
             on_encrypted_extensions_received_cb=self._on_encrypted_extensions_fsm_transaction,
@@ -78,7 +78,7 @@ class TlsSession:
             self.public_key
         ).build_client_hello_message()
 
-        self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
+        self.tls_fsm.transition(TlsClientFsmEvent.SESSION_BEGIN)
 
         return RecordManager.build_unencrypted_record(
             tls_version=TLSVersion.V1_0,
@@ -90,10 +90,10 @@ class TlsSession:
         record_type = RecordManager.get_record_type(record)
 
         encrypted_handshake_states = [
-            TlsFsmState.WAIT_ENCRYPTED_EXTENSIONS,
-            TlsFsmState.WAIT_CERTIFICATE,
-            TlsFsmState.WAIT_CERTIFICATE_VERIFY,
-            TlsFsmState.WAIT_FINISHED,
+            TlsClientFsmState.WAIT_ENCRYPTED_EXTENSIONS,
+            TlsClientFsmState.WAIT_CERTIFICATE,
+            TlsClientFsmState.WAIT_CERTIFICATE_VERIFY,
+            TlsClientFsmState.WAIT_FINISHED,
         ]
 
         if record_type == RecordHeaderType.APPLICATION_DATA:
@@ -139,15 +139,15 @@ class TlsSession:
 
         match message_type:
             case HandshakeMessageType.SERVER_HELLO:
-                event = TlsFsmEvent.SERVER_HELLO_RECEIVED
+                event = TlsClientFsmEvent.SERVER_HELLO_RECEIVED
             case HandshakeMessageType.ENCRYPTED_EXTENSIONS:
-                event = TlsFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED
+                event = TlsClientFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED
             case HandshakeMessageType.CERTIFICATE:
-                event = TlsFsmEvent.CERTIFICATE_RECEIVED
+                event = TlsClientFsmEvent.CERTIFICATE_RECEIVED
             case HandshakeMessageType.CERTIFICATE_VERIFY:
-                event = TlsFsmEvent.CERTIFICATE_VERIFY_RECEIVED
+                event = TlsClientFsmEvent.CERTIFICATE_VERIFY_RECEIVED
             case HandshakeMessageType.FINISHED:
-                event = TlsFsmEvent.FINISHED_RECEIVED
+                event = TlsClientFsmEvent.FINISHED_RECEIVED
             case _:
                 event = None
 
