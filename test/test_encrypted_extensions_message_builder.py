@@ -26,3 +26,8 @@ class TestEncryptedExtensionsMessageBuilder(unittest.TestCase):
         message = EncryptedExtensionsMessageBuilder.build_from_bytes(self.data)
         expected_extensions = bytes.fromhex("")
         self.assertEqual(message.extensions, expected_extensions)
+
+    def test_should_build_encrypted_extensions_message(self):
+        encrypted_extensions_message = EncryptedExtensionsMessageBuilder.get_encrypted_extensions_message()
+        expected_encrypted_extensions_message = bytes.fromhex("08 00 00 02 00 00")
+        self.assertEqual(encrypted_extensions_message, expected_encrypted_extensions_message)
