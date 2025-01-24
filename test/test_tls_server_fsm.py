@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
+from src.fsm import FSMInvalidEventForStateError
 from src.tls_server_fsm import TlsServerFsmEvent, TlsServerFsmState, TlsServerFsm
 
 
@@ -26,3 +27,22 @@ class TestTlsClientFsm(unittest.TestCase):
     def test_should_proceed_to_wait_finished_state(self):
         self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
         self.assertEqual(self.tls_fsm.get_current_state(), TlsServerFsmState.WAIT_FINISHED)
+
+    def test_should_call_on_session_begin_cb_with_context(self):
+        ctx = "sb ctx"
+        self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN, ctx)
+        self.on_session_begin_transaction_cb.assert_called_with(ctx)
+
+    def test_should_not_proceed_to_next_state_if_event_invalid_for_current_state(self):
+        self.assertRaises(FSMInvalidEventForStateError, self.tls_fsm.transition, TlsServerFsmEvent.FINISHED_RECEIVED)
+
+    def test_should_proceed_to_connected_state(self):
+        self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
+        self.tls_fsm.transition(TlsServerFsmEvent.FINISHED_RECEIVED)
+        self.assertEqual(self.tls_fsm.get_current_state(), TlsServerFsmState.CONNECTED)
+
+    def test_should_call_on_finished_received_with_context(self):
+        ctx = "fr ctx"
+        self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
+        self.tls_fsm.transition(TlsServerFsmEvent.FINISHED_RECEIVED, ctx)
+        self.on_finished_received_cb.assert_called_with(ctx)
