@@ -1,3 +1,8 @@
+from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.backends import default_backend
+
+from src.messages.certificate_message_builder import CertificateMessageBuilder
 from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
@@ -9,10 +14,11 @@ from src.utils import HandshakeMessageType
 
 
 class TlsServerSession:
-    def __init__(self, on_data_to_send):
+    def __init__(self, on_data_to_send, certificate_path):
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
         self.on_data_to_send = on_data_to_send
+        self.certificate_path = certificate_path
 
         self.client_hello: ClientHelloMessage or None = None
         self.server_hello: ServerHelloMessage or None = None
@@ -45,7 +51,13 @@ class TlsServerSession:
         self.server_hello = self._build_server_hello()
 
         self.on_data_to_send(self.server_hello)
-        
+
+        with open(self.certificate_path, "rb") as cert_file:
+            certificate = x509.load_der_x509_certificate(cert_file.read(), default_backend())
+
+        certificate_bytes = certificate.public_bytes(encoding=Encoding.DER)
+        self.certificate_message = CertificateMessageBuilder(certificate_bytes).get_certificate_message()
+
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
