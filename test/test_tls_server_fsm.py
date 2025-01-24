@@ -19,3 +19,10 @@ class TestTlsClientFsm(unittest.TestCase):
 
     def test_should_return_tls_states(self):
         self.assertSequenceEqual(self.tls_fsm.get_states(), self.tls_states)
+
+    def test_should_return_tls_events(self):
+        self.assertSequenceEqual(self.tls_fsm.get_events(), self.tls_events)
+
+    def test_should_proceed_to_wait_finished_state(self):
+        self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
+        self.assertEqual(self.tls_fsm.get_current_state(), TlsServerFsmState.WAIT_FINISHED)
