@@ -1,3 +1,5 @@
+from typing import Optional
+
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -26,24 +28,24 @@ from src.utils import TLSVersion, RecordHeaderType, HandshakeMessageType
 
 
 class TlsSession:
-    client_secret: bytes or None = None
+    client_secret: bytes = b''
 
-    client_handshake_key: bytes or None = None
-    client_handshake_iv: bytes or None = None
-    server_handshake_key: bytes or None = None
-    server_handshake_iv: bytes or None = None
+    client_handshake_key: bytes = b''
+    client_handshake_iv: bytes = b''
+    server_handshake_key: bytes = b''
+    server_handshake_iv: bytes = b''
 
-    client_application_key: bytes or None = None
-    client_application_iv: bytes or None = None
-    server_application_key: bytes or None = None
-    server_application_iv: bytes or None = None
+    client_application_key: bytes = b''
+    client_application_iv: bytes = b''
+    server_application_key: bytes = b''
+    server_application_iv: bytes = b''
 
-    client_hello: ClientHelloMessage or None = None
-    server_hello: ServerHelloMessage or None = None
-    encrypted_extensions: EncryptedExtensionsMessage or None = None
-    certificate_message: CertificateMessage or None = None
-    certificate_verify_message: CertificateVerifyMessage or None = None
-    server_finished_message: HandshakeFinishedMessage or None = None
+    client_hello: Optional[ClientHelloMessage] = None
+    server_hello: Optional[ServerHelloMessage] = None
+    encrypted_extensions: Optional[EncryptedExtensionsMessage] = None
+    certificate_message: Optional[CertificateMessage] = None
+    certificate_verify_message: Optional[CertificateVerifyMessage] = None
+    server_finished_message: Optional[HandshakeFinishedMessage] = None
 
     server_certificate = None
 
@@ -56,8 +58,8 @@ class TlsSession:
         self.on_data_to_send = on_data_to_send
         self.on_application_data = on_application_data
 
-        self.derived_secret: bytes or None = None
-        self.handshake_secret: bytes or None = None
+        self.derived_secret: bytes = b''
+        self.handshake_secret: bytes = b''
 
         self.handshake_messages_received = 0
         self.handshake_messages_sent = 0
