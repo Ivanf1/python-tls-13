@@ -170,3 +170,14 @@ class TestTlsServerSession(unittest.TestCase):
             session.on_record_received(self.client_hello)
             expected_certificate_verify_header = bytes.fromhex("1703030119")
             self.assertEqual(on_data_to_send.call_args_list[3][0][0][0:5], expected_certificate_verify_header)
+
+    def test_should_build_server_handshake_finished_message(self):
+        with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
+                patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
+            mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
+            mock_server_random.return_value = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            session = TlsServerSession(Mock(), self.certificate_path, self.certificate_private_key_path, Mock())
+            session.start()
+            session.on_record_received(self.client_hello)
+            expected_handshake_finished_message = bytes.fromhex("14000020bb2d7d2a02263f1f66adcc6e0c58848807efcb4d4a4cf46fcad923967380928a")
+            self.assertEqual(session.server_handshake_finished.to_bytes(), expected_handshake_finished_message)

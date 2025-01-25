@@ -1,5 +1,6 @@
 import binascii
 from typing import Optional
+from wsgiref.simple_server import server_version
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -13,13 +14,14 @@ from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.messages.encrypted_extensions_message import EncryptedExtensionsMessage
 from src.messages.encrypted_extensions_message_builder import EncryptedExtensionsMessageBuilder
+from src.messages.handshake_finished_message_builder import HandshakeFinishedMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
 from src.messages.server_hello_message_builder import ServerHelloMessageBuilder
 from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret, \
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
-    get_server_handshake_iv, compute_new_nonce
+    get_server_handshake_iv, compute_new_nonce, get_finished_secret
 from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent
 from src.utils import HandshakeMessageType, TLSVersion, RecordHeaderType
 
@@ -43,6 +45,9 @@ class TlsServerSession:
         self.server_hello: Optional[ServerHelloMessage] = None
         self.encrypted_extensions: Optional[EncryptedExtensionsMessage] = None
         self.certificate_message: Optional[CertificateMessage] = None
+
+        self.hello_hash: bytes = b''
+        self.handshake_hash: bytes = b''
 
         self.handshake_messages_sent = 0
 
@@ -95,6 +100,8 @@ class TlsServerSession:
         self.on_data_to_send(certificate_verify_record)
         self.handshake_messages_sent += 1
 
+        self._build_handshake_finished_message()
+
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
@@ -104,15 +111,15 @@ class TlsServerSession:
         shared_secret = get_shared_secret(self.private_key, self.client_public_key)
         self.handshake_secret = get_handshake_secret(shared_secret, self.derived_secret)
 
-        hello_hash = get_records_hash_sha256(self.client_hello.to_bytes(), self.server_hello.to_bytes())
+        self.hello_hash = get_records_hash_sha256(self.client_hello.to_bytes(), self.server_hello.to_bytes())
 
-        client_secret = get_client_secret_handshake(self.handshake_secret, hello_hash)
-        self.client_handshake_key = get_client_handshake_key(client_secret)
-        self.client_handshake_iv = get_client_handshake_iv(client_secret)
+        self.client_secret_handshake = get_client_secret_handshake(self.handshake_secret, self.hello_hash)
+        self.client_handshake_key = get_client_handshake_key(self.client_secret_handshake)
+        self.client_handshake_iv = get_client_handshake_iv(self.client_secret_handshake)
 
-        server_secret = get_server_secret_handshake(self.handshake_secret, hello_hash)
-        self.server_handshake_key = get_server_handshake_key(server_secret)
-        self.server_handshake_iv = get_server_handshake_iv(server_secret)
+        self.server_secret_handshake = get_server_secret_handshake(self.handshake_secret, self.hello_hash)
+        self.server_handshake_key = get_server_handshake_key(self.server_secret_handshake)
+        self.server_handshake_iv = get_server_handshake_iv(self.server_secret_handshake)
 
     def _build_encrypted_extensions_message(self):
         self.encrypted_extensions = EncryptedExtensionsMessageBuilder.get_encrypted_extensions_message()
@@ -143,7 +150,7 @@ class TlsServerSession:
         )
 
     def _build_certificate_verify_message(self):
-        handshake_hash = get_records_hash_sha256(
+        self.handshake_hash = get_records_hash_sha256(
             self.client_hello.to_bytes(),
             self.server_hello.to_bytes(),
             self.encrypted_extensions.to_bytes(),
@@ -151,7 +158,7 @@ class TlsServerSession:
         )
 
         self.certificate_verify = CertificateVerifyMessageBuilder(
-            self.certificate_private_key_path).get_certificate_verify_message(handshake_hash)
+            self.certificate_private_key_path).get_certificate_verify_message(self.handshake_hash)
         nonce = compute_new_nonce(self.server_handshake_iv, self.handshake_messages_sent)
 
         return RecordManager.build_encrypted_record(
@@ -159,6 +166,20 @@ class TlsServerSession:
             RecordHeaderType.APPLICATION_DATA,
             RecordHeaderType.HANDSHAKE,
             self.certificate_verify.to_bytes(),
+            self.server_handshake_key,
+            nonce
+        )
+
+    def _build_handshake_finished_message(self):
+        finished_key = get_finished_secret(self.server_secret_handshake)
+
+        self.server_handshake_finished = HandshakeFinishedMessageBuilder().get_handshake_finished(finished_key, self.handshake_hash)
+        nonce = compute_new_nonce(self.server_handshake_iv, self.handshake_messages_sent)
+        return RecordManager.build_encrypted_record(
+            TLSVersion.V1_2,
+            RecordHeaderType.APPLICATION_DATA,
+            RecordHeaderType.HANDSHAKE,
+            self.server_handshake_finished.to_bytes(),
             self.server_handshake_key,
             nonce
         )
