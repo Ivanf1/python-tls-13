@@ -1,3 +1,4 @@
+import binascii
 from typing import Optional
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
@@ -71,7 +72,8 @@ class TlsServerSession:
         self.client_public_key = X25519PublicKey.from_public_bytes(self.client_hello.get_public_key())
 
         self._compute_handshake_keys()
-        self._build_encrypted_extensions_message()
+        encrypted_extension_record = self._build_encrypted_extensions_message()
+        self.on_data_to_send(encrypted_extension_record)
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
