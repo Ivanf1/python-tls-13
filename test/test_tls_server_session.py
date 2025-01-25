@@ -101,3 +101,14 @@ class TestTlsServerSession(unittest.TestCase):
             session.on_record_received(self.client_hello)
             expected_server_handshake_iv = bytes.fromhex("decf18f51af9585d6f8ed346")
             self.assertEqual(session.server_handshake_iv, expected_server_handshake_iv)
+
+    def test_should_build_encrypted_extensions_record(self):
+        with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
+                patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
+            mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
+            mock_server_random.return_value = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            session = TlsServerSession(Mock(), self.certificate_path, self.certificate_private_key_path, Mock())
+            session.start()
+            session.on_record_received(self.client_hello)
+            expected_encrypted_extensions = bytes.fromhex("080000020000")
+            self.assertEqual(session.encrypted_extensions.to_bytes(), expected_encrypted_extensions)
