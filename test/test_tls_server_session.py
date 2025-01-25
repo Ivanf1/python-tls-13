@@ -15,6 +15,7 @@ class TestTlsServerSession(unittest.TestCase):
         self.certificate_path = path.join(path.dirname(path.abspath(__file__)), "data", "server_cert.der")
         self.certificate_private_key_path = path.join(path.dirname(path.abspath(__file__)), "data", "server_key.pem")
         self.client_hello = bytes.fromhex("""16030320210100007c03030000000000000000000000000000000000000000000000000000000000000000000213010054000000160000136578616d706c652e756c666865696d2e6e6574000a0002001d000d00020809002b0002030400330024001d0020080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70675""")
+        self.client_handshake_finished = bytes.fromhex("1703030035f46a88459776b4419aebdd7a5386280a0bf118d249959e3be9755b55bf16add32491edd1618af56be554847d13f71f9eb62912f73b")
 
     def test_should_call_transition_on_session_begin(self):
         with patch.object(TlsServerFsm, "transition") as mock_transition:
@@ -193,3 +194,16 @@ class TestTlsServerSession(unittest.TestCase):
             session.on_record_received(self.client_hello)
             expected_server_handshake_finished = bytes.fromhex("1703030035778b9c5eac6e5a2c27e93cf28254780758ab642e292d444829ed29eebdf22143be3a729f98e8d9080e44681c848e7745578c211f37")
             self.assertEqual(on_data_to_send.call_args_list[4][0][0], expected_server_handshake_finished)
+
+    def test_should_store_client_handshake_finished(self):
+        with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
+                patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
+            mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
+            mock_server_random.return_value = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            on_data_to_send = Mock()
+            session = TlsServerSession(on_data_to_send, self.certificate_path, self.certificate_private_key_path, Mock())
+            session.start()
+            session.on_record_received(self.client_hello)
+            session.on_record_received(self.client_handshake_finished)
+            expected_client_handshake_finished = bytes.fromhex("1400002080f94998017147fb7b4b33bcfd637a0cf5f369a1e005ac51cda5565469d8de3e")
+            self.assertEqual(session.client_handshake_finished.to_bytes(), expected_client_handshake_finished)

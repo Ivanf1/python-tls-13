@@ -22,7 +22,7 @@ from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_ea
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
     get_server_handshake_iv, compute_new_nonce, get_finished_secret
-from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent
+from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent, TlsServerFsmState
 from src.utils import HandshakeMessageType, TLSVersion, RecordHeaderType
 
 
@@ -49,6 +49,7 @@ class TlsServerSession:
         self.hello_hash: bytes = b''
         self.handshake_hash: bytes = b''
 
+        self.handshake_messages_received = 0
         self.handshake_messages_sent = 0
 
         self.tls_fsm = TlsServerFsm(
@@ -61,7 +62,39 @@ class TlsServerSession:
         self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
 
     def on_record_received(self, record):
-        self._on_handshake_message_received(record)
+        record_type = RecordManager.get_record_type(record)
+
+        encrypted_handshake_states = [
+            TlsServerFsmState.WAIT_CLIENT_HELLO,
+            TlsServerFsmState.WAIT_FINISHED,
+        ]
+
+        if record_type == RecordHeaderType.APPLICATION_DATA:
+            # The record needs to be decrypted.
+            # Based on the current state of the TLS FSM machine
+            # we know which key to use to decrypt the record.
+            if self.tls_fsm.get_current_state() in encrypted_handshake_states:
+                # Every time a new encrypted message is received, we need to xor the iv (nonce)
+                # with the number of messages received.
+                # https://datatracker.ietf.org/doc/html/rfc8446#section-5.3
+
+                nonce = compute_new_nonce(self.client_handshake_iv, self.handshake_messages_received)
+                self.handshake_messages_received += 1
+
+                # Use handshake key
+                header = RecordManager.get_record_header(record)
+                record = header + RecordManager.get_decrypted_record_payload(
+                    record,
+                    self.client_handshake_key,
+                    nonce,
+                )
+
+                self._on_handshake_message_received(record)
+            else:
+                pass
+
+        else:
+            self._on_handshake_message_received(record)
 
     def _on_handshake_message_received(self, record):
         message_type = RecordManager.get_handshake_message_type(record)
@@ -69,6 +102,8 @@ class TlsServerSession:
         match message_type:
             case HandshakeMessageType.CLIENT_HELLO:
                 event = TlsServerFsmEvent.CLIENT_HELLO_RECEIVED
+            case HandshakeMessageType.FINISHED:
+                event = TlsServerFsmEvent.FINISHED_RECEIVED
             case _:
                 event = None
 
@@ -107,6 +142,7 @@ class TlsServerSession:
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
+        self.client_handshake_finished = HandshakeFinishedMessageBuilder.build_from_bytes(ctx[5:])
         return True
 
     def _compute_handshake_keys(self):
@@ -177,6 +213,7 @@ class TlsServerSession:
 
         self.server_handshake_finished = HandshakeFinishedMessageBuilder().get_handshake_finished(finished_key, self.handshake_hash)
         nonce = compute_new_nonce(self.server_handshake_iv, self.handshake_messages_sent)
+
         return RecordManager.build_encrypted_record(
             TLSVersion.V1_2,
             RecordHeaderType.APPLICATION_DATA,
