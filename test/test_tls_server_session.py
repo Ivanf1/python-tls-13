@@ -41,7 +41,7 @@ class TestTlsServerSession(unittest.TestCase):
         session = TlsServerSession(on_data_to_send, self.certificate_path, self.certificate_private_key_path, Mock(), Mock())
         session.start()
         session.on_record_received(self.client_hello)
-        self.assertEqual(on_data_to_send.call_args_list[0][0][0][0:1], HandshakeMessageType.SERVER_HELLO.value)
+        self.assertEqual(on_data_to_send.call_args_list[0][0][0][5:6], HandshakeMessageType.SERVER_HELLO.value)
 
     def test_should_extract_client_public_key(self):
         session = TlsServerSession(Mock(), self.certificate_path, self.certificate_private_key_path, Mock(), Mock())

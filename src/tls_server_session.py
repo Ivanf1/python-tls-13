@@ -134,7 +134,13 @@ class TlsServerSession:
         self.client_hello = ClientHelloMessageBuilder.build_from_bytes(ctx[5:])
         self.server_hello = ServerHelloMessageBuilder(self.public_key).build_server_hello_message()
 
-        self.on_data_to_send(self.server_hello.to_bytes())
+        server_hello_record = RecordManager.build_unencrypted_record(
+            TLSVersion.V1_2,
+            RecordHeaderType.HANDSHAKE,
+            self.server_hello.to_bytes()
+        )
+
+        self.on_data_to_send(server_hello_record)
 
         self.client_public_key = X25519PublicKey.from_public_bytes(self.client_hello.get_public_key())
 
