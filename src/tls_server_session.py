@@ -1,5 +1,11 @@
-from src.tls_crypto import get_X25519_private_key, get_X25519_public_key
+from typing import Optional
+
+from src.messages.client_hello_message import ClientHelloMessage
+from src.messages.server_hello_message import ServerHelloMessage
+from src.record_manager import RecordManager
+from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret
 from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent
+from src.utils import HandshakeMessageType
 
 
 class TlsServerSession:
@@ -10,6 +16,11 @@ class TlsServerSession:
         self.certificate_path = certificate_path
         self.certificate_private_key_path = certificate_private_key_path
         self.on_connected = on_connected
+
+        self.derived_secret: bytes = b''
+
+        self.client_hello: Optional[ClientHelloMessage] = None
+        self.server_hello: Optional[ServerHelloMessage] = None
 
         self.tls_fsm = TlsServerFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
@@ -26,7 +37,9 @@ class TlsServerSession:
     def _on_handshake_message_received(self, record):
         pass
 
-    def _on_session_begin_fsm_transaction(self, ctx):
+    def _on_session_begin_fsm_transaction(self, _):
+        early_secret = get_early_secret()
+        self.derived_secret = get_derived_secret(early_secret)
         return True
 
     def _on_client_hello_received_fsm_transaction(self, ctx):
