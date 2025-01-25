@@ -19,3 +19,6 @@ class TestTlsServerFsm(unittest.TestCase):
 
     def test_should_return_tls_states(self):
         self.assertSequenceEqual(self.tls_fsm.get_states(), self.tls_states)
+
+    def test_should_return_tls_events(self):
+        self.assertSequenceEqual(self.tls_fsm.get_events(), self.tls_events)
