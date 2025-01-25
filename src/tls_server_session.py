@@ -1,7 +1,9 @@
 from typing import Optional
 
 from src.messages.client_hello_message import ClientHelloMessage
+from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
+from src.messages.server_hello_message_builder import ServerHelloMessageBuilder
 from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret
 from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent
@@ -32,10 +34,18 @@ class TlsServerSession:
         self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
 
     def on_record_received(self, record):
-        pass
+        self._on_handshake_message_received(record)
 
     def _on_handshake_message_received(self, record):
-        pass
+        message_type = RecordManager.get_handshake_message_type(record)
+
+        match message_type:
+            case HandshakeMessageType.CLIENT_HELLO:
+                event = TlsServerFsmEvent.CLIENT_HELLO_RECEIVED
+            case _:
+                event = None
+
+        self.tls_fsm.transition(event, record)
 
     def _on_session_begin_fsm_transaction(self, _):
         early_secret = get_early_secret()
@@ -43,6 +53,8 @@ class TlsServerSession:
         return True
 
     def _on_client_hello_received_fsm_transaction(self, ctx):
+        self.client_hello = ClientHelloMessageBuilder.build_from_bytes(ctx[5:])
+        self.server_hello = ServerHelloMessageBuilder(self.public_key).build_server_hello_message()
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
