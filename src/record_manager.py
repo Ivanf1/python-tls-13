@@ -88,4 +88,7 @@ class RecordManager:
 
     @staticmethod
     def get_decrypted_record_payload(record, key, nonce):
-        return decrypt(key, nonce, record[5:], record[:5])
+        decrypted_record = decrypt(key, nonce, record[5:], record[:5])
+        # Remove the last byte, it indicates which type of record it is,
+        # it's not part of the actual payload
+        return decrypted_record[:-1]

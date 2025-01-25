@@ -1,3 +1,4 @@
+import binascii
 import unittest
 from os import path
 from unittest.mock import patch, PropertyMock, Mock
@@ -58,7 +59,7 @@ class TestTlsSession(unittest.TestCase):
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
-            expected_encrypted_extensions = bytes.fromhex("""08 00 00 02 00 00 16""")
+            expected_encrypted_extensions = bytes.fromhex("""08 00 00 02 00 00""")
             self.assertEqual(session.encrypted_extensions.to_bytes(), expected_encrypted_extensions)
 
     def test_should_store_certificate_message_on_certificate_message_received(self):
@@ -98,7 +99,7 @@ class TestTlsSession(unittest.TestCase):
             20 9e 66 7f ce 5a e2 e4 ac 99 c7 c9 38 18 f8 b2 51 07 22 df ed 97 f3 2e 3e 93 49 d4 c6 6c 9e a6 39 6d 74 
             44 62 a0 6b 42 c6 d5 ba 68 8e ac 3a 01 7b dd fc 8e 2c fc ad 27 cb 69 d3 cc dc a2 80 41 44 65 d3 ae 34 8c 
             e0 f3 4a b2 fb 9c 61 83 71 31 2b 19 10 41 64 1c 23 7f 11 a5 d6 5c 84 4f 04 04 84 99 38 71 2b 95 9e d6 85 
-            bc 5c 5d d6 45 ed 19 90 94 73 40 29 26 dc b4 0e 34 69 a1 59 41 e8 e2 cc a8 4b b6 08 46 36 a0 00 00 16""")
+            bc 5c 5d d6 45 ed 19 90 94 73 40 29 26 dc b4 0e 34 69 a1 59 41 e8 e2 cc a8 4b b6 08 46 36 a0 00 00""")
             self.assertEqual(session.certificate_message.to_bytes(), expected_certificate_record)
 
     def test_should_store_certificate_verify_message_on_certificate_verify_message_received(self):
@@ -119,7 +120,7 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.encrypted_extensions)
             session.on_record_received(self.server_certificate)
             session.on_record_received(self.server_certificate_verify)
-            expected_certificate_verify_record = bytes.fromhex("""0f 00 01 04 08 04 01 00 5c bb 24 c0 40 93 32 da a9 20 bb ab bd b9 bd 50 17 0b e4 9c fb e0 a4 10 7f ca 6f fb 10 68 e6 5f 96 9e 6d e7 d4 f9 e5 60 38 d6 7c 69 c0 31 40 3a 7a 7c 0b cc 86 83 e6 57 21 a0 c7 2c c6 63 40 19 ad 1d 3a d2 65 a8 12 61 5b a3 63 80 37 20 84 f5 da ec 7e 63 d3 f4 93 3f 27 22 74 19 a6 11 03 46 44 dc db c7 be 3e 74 ff ac 47 3f aa ad de 8c 2f c6 5f 32 65 77 3e 7e 62 de 33 86 1f a7 05 d1 9c 50 6e 89 6c 8d 82 f5 bc f3 5f ec e2 59 b7 15 38 11 5e 9c 8c fb a6 2e 49 bb 84 74 f5 85 87 b1 1b 8a e3 17 c6 33 e9 c7 6c 79 1d 46 62 84 ad 9c 4f f7 35 a6 d2 e9 63 b5 9b bc a4 40 a3 07 09 1a 1b 4e 46 bc c7 a2 f9 fb 2f 1c 89 8e cb 19 91 8b e4 12 1d 7e 8e d0 4c d5 0c 9a 59 e9 87 98 01 07 bb bf 29 9c 23 2e 7f db e1 0a 4c fd ae 5c 89 1c 96 af df f9 4b 54 cc d2 bc 19 d3 cd aa 66 44 85 9c 16""")
+            expected_certificate_verify_record = bytes.fromhex("""0f 00 01 04 08 04 01 00 5c bb 24 c0 40 93 32 da a9 20 bb ab bd b9 bd 50 17 0b e4 9c fb e0 a4 10 7f ca 6f fb 10 68 e6 5f 96 9e 6d e7 d4 f9 e5 60 38 d6 7c 69 c0 31 40 3a 7a 7c 0b cc 86 83 e6 57 21 a0 c7 2c c6 63 40 19 ad 1d 3a d2 65 a8 12 61 5b a3 63 80 37 20 84 f5 da ec 7e 63 d3 f4 93 3f 27 22 74 19 a6 11 03 46 44 dc db c7 be 3e 74 ff ac 47 3f aa ad de 8c 2f c6 5f 32 65 77 3e 7e 62 de 33 86 1f a7 05 d1 9c 50 6e 89 6c 8d 82 f5 bc f3 5f ec e2 59 b7 15 38 11 5e 9c 8c fb a6 2e 49 bb 84 74 f5 85 87 b1 1b 8a e3 17 c6 33 e9 c7 6c 79 1d 46 62 84 ad 9c 4f f7 35 a6 d2 e9 63 b5 9b bc a4 40 a3 07 09 1a 1b 4e 46 bc c7 a2 f9 fb 2f 1c 89 8e cb 19 91 8b e4 12 1d 7e 8e d0 4c d5 0c 9a 59 e9 87 98 01 07 bb bf 29 9c 23 2e 7f db e1 0a 4c fd ae 5c 89 1c 96 af df f9 4b 54 cc d2 bc 19 d3 cd aa 66 44 85 9c""")
             self.assertEqual(session.certificate_verify_message.to_bytes(), expected_certificate_verify_record)
 
     def test_should_store_handshake_finished_message_on_handshake_finished_message_received(self):
@@ -145,7 +146,7 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.server_certificate)
             session.on_record_received(self.server_certificate_verify)
             session.on_record_received(self.handshake_finished)
-            expected_handshake_finished_message = bytes.fromhex("""14 00 00 30 7e 30 ee cc b6 b2 3b e6 c6 ca 36 39 92 e8 42 da 87 7e e6 47 15 ae 7f c0 cf 87 f9 e5 03 21 82 b5 bb 48 d1 e3 3f 99 79 05 5a 16 0c 8d bb b1 56 9c 16""")
+            expected_handshake_finished_message = bytes.fromhex("""14 00 00 30 7e 30 ee cc b6 b2 3b e6 c6 ca 36 39 92 e8 42 da 87 7e e6 47 15 ae 7f c0 cf 87 f9 e5 03 21 82 b5 bb 48 d1 e3 3f 99 79 05 5a 16 0c 8d bb b1 56 9c""")
             self.assertEqual(session.server_finished_message.to_bytes(), expected_handshake_finished_message)
 
     def test_should_call_on_connected_on_handshake_finished_message_received(self):
@@ -209,7 +210,7 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.server_certificate)
             session.on_record_received(self.server_certificate_verify)
             session.on_record_received(self.handshake_finished)
-            expected_client_application_key = bytes.fromhex("55d5118ace9a005db8b6822330ba1cd4")
+            expected_client_application_key = bytes.fromhex("225e01ce11fcd6b6b5388b00a79b2643")
             self.assertEqual(session.client_application_key, expected_client_application_key)
 
     def test_should_compute_client_application_iv_on_handshake_finished(self):
@@ -246,7 +247,7 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.server_certificate)
             session.on_record_received(self.server_certificate_verify)
             session.on_record_received(self.handshake_finished)
-            expected_client_application_iv = bytes.fromhex("82c7f29670b59d5a096db894")
+            expected_client_application_iv = bytes.fromhex("86e9792191970d9d2e7fade8")
             self.assertEqual(session.client_application_iv, expected_client_application_iv)
 
     def test_should_compute_server_application_key_on_handshake_finished(self):
@@ -283,7 +284,7 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.server_certificate)
             session.on_record_received(self.server_certificate_verify)
             session.on_record_received(self.handshake_finished)
-            expected_server_application_key = bytes.fromhex("c228c7bee3f5ff301f7486fa42602cc3")
+            expected_server_application_key = bytes.fromhex("db52af4d6d33a637be4c44b614a68693")
             self.assertEqual(session.server_application_key, expected_server_application_key)
 
     def test_should_compute_server_application_iv_on_handshake_finished(self):
@@ -320,7 +321,7 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.server_certificate)
             session.on_record_received(self.server_certificate_verify)
             session.on_record_received(self.handshake_finished)
-            expected_server_application_iv = bytes.fromhex("9b72fb0c52d090669090da80")
+            expected_server_application_iv = bytes.fromhex("5ecccaa660af09ae004791ee")
             self.assertEqual(session.server_application_iv, expected_server_application_iv)
 
     def test_should_decrypt_application_record(self):
@@ -349,7 +350,7 @@ class TestTlsSession(unittest.TestCase):
                 5c 0c 21 c5 0f 03 26 1d c4 2c e7 c5 97 0c 4c 01 16 06 fb 99 8a 86 c3 fa 30 e5 5e ea 91 f1 ff f3 18 fc 7b d5 
                 88 31 bf 49 c8 8d 7b 59 05 91 a6 5c 7d e8 cf c6 77 46 8a 54 fd be c0 d8 53 be 20 21 c8 bb fc db e5 1f 5d 9a 
                 0c 70 85 84 1a 01 e4 95 85 f6 8b 4a fe e1 d7 07 e2 cb b1 a0 b4 23 aa 7e 32 d5 60 7b d9 9d d4 db 3c 9a aa ed 
-                43 d3 5d 26 b4 b1 c6 84 71 71 ea a0 7a 9b c8 cb f7 58 49 9a 00 00 16""")
+                43 d3 5d 26 b4 b1 c6 84 71 71 ea a0 7a 9b c8 cb f7 58 49 9a 00 00""")
             on_application_message_callback.assert_called_with(expected_application_message)
 
     def test_should_decrypt_application_record_ping(self):
@@ -367,7 +368,7 @@ class TestTlsSession(unittest.TestCase):
             session.start()
             session.on_record_received(bytes.fromhex("""17 03 03 00 15 0c da 85 f1 44 7a e2 3f a6 6d 56 f4 c5 40 84 82 
                 b1 b1 d4 c9 98"""))
-            expected_application_message = bytes.fromhex("""17 03 03 00 15 70 6f 6e 67 17""")
+            expected_application_message = bytes.fromhex("""17 03 03 00 15 70 6f 6e 67""")
             on_application_message_callback.assert_called_with(expected_application_message)
 
     def test_should_call_on_data_to_send_on_handshake_finished_message_received(self):

@@ -118,7 +118,7 @@ class TestRecordManager(unittest.TestCase):
          9e a5 8c 18 1e 81 8e 95 b8 c3 fb 0b f3 27 84 09 d3 be 15 2a 3d
          a5 04 3e 06 3d da 65 cd f5 ae a2 0d 53 df ac d4 2f 74 f3 14 00
          00 20 9b 9b 14 1d 90 63 37 fb d2 cb dc e7 1d f4 de da 4a b4 2c
-         30 95 72 cb 7f ff ee 54 54 b7 8f 07 18 16""")
+         30 95 72 cb 7f ff ee 54 54 b7 8f 07 18""")
         self.assertEqual(decrypted_record, expected_decrypted_record)
 
     def test_should_return_decrypted_application_record_client(self):
@@ -126,7 +126,7 @@ class TestRecordManager(unittest.TestCase):
         nonce = bytes.fromhex("""bb007956f474b25de902432f""")
         record = bytes.fromhex("""17 03 03 00 15 82 81 39 cb 7b 73 aa ab f5 b8 2f bf 9a 29 61 bc de 10 03 8a 32""")
         decrypted_record = RecordManager.get_decrypted_record_payload(record, key, nonce)
-        expected_decrypted_record = bytes.fromhex("""70 69 6e 67 17""")
+        expected_decrypted_record = bytes.fromhex("""70 69 6e 67""")
         self.assertEqual(decrypted_record, expected_decrypted_record)
 
     def test_should_return_decrypted_application_record_server(self):
@@ -146,7 +146,7 @@ class TestRecordManager(unittest.TestCase):
         2c e7 c5 97 0c 4c 01 ea 33 1c ff c8 99 66 ef 54 8b e4 df 9a 8b a4 38 5b eb 86 80 fd 0b 78 df b8 e9 8e fc 8f cc 
         d8 14 fe cd 1d 9b ce 89 ca 05 dc 28 c2 49 e5 bd 61 d0 3a 56 8f 9a 0a 46 fb fd 05 30 2d b6 b2 f7 a3 13 e3 32 67 
         bf 0b cb dc ec fb 04 a4 d8 2f 5a 69 45 1f 56 7a b5 19 9b b2 6c 5c f2 00 72 f0 45 03 73 02 8f e0 71 d4 f4 1d 8f 
-        61 ae 02 4d 69 bb ae 4c 00 00 16""")
+        61 ae 02 4d 69 bb ae 4c 00 00""")
         self.assertEqual(decrypted_record, expected_decrypted_record)
 
     def test_should_return_decrypted_application_record_server_nonce_xor(self):
@@ -166,7 +166,7 @@ class TestRecordManager(unittest.TestCase):
         2c e7 c5 97 0c 4c 01 16 06 fb 99 8a 86 c3 fa 30 e5 5e ea 91 f1 ff f3 18 fc 7b d5 88 31 bf 49 c8 8d 7b 59 05 91 
         a6 5c 7d e8 cf c6 77 46 8a 54 fd be c0 d8 53 be 20 21 c8 bb fc db e5 1f 5d 9a 0c 70 85 84 1a 01 e4 95 85 f6 8b 
         4a fe e1 d7 07 e2 cb b1 a0 b4 23 aa 7e 32 d5 60 7b d9 9d d4 db 3c 9a aa ed 43 d3 5d 26 b4 b1 c6 84 71 71 ea a0 
-        7a 9b c8 cb f7 58 49 9a 00 00 16""")
+        7a 9b c8 cb f7 58 49 9a 00 00""")
         self.assertEqual(decrypted_record, expected_decrypted_record)
 
     def test_should_return_unencrypted_record(self):
