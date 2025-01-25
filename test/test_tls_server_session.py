@@ -158,3 +158,15 @@ class TestTlsServerSession(unittest.TestCase):
             session.on_record_received(self.client_hello)
             expected_certificate_verify_start = bytes.fromhex("0f")
             self.assertEqual(session.certificate_verify.to_bytes()[0:1], expected_certificate_verify_start)
+
+    def test_should_send_certificate_verify_record(self):
+        with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
+                patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
+            mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
+            mock_server_random.return_value = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            on_data_to_send = Mock()
+            session = TlsServerSession(on_data_to_send, self.certificate_path, self.certificate_private_key_path, Mock())
+            session.start()
+            session.on_record_received(self.client_hello)
+            expected_certificate_verify_header = bytes.fromhex("1703030119")
+            self.assertEqual(on_data_to_send.call_args_list[3][0][0][0:5], expected_certificate_verify_header)
