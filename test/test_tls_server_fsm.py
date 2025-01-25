@@ -10,10 +10,12 @@ class TestTlsServerFsm(unittest.TestCase):
         self.tls_events = [event for event in TlsServerFsmEvent]
 
         self.on_session_begin_transaction_cb = Mock(return_value=True)
+        self.on_client_hello_received_transition_cb = Mock(return_value=True)
         self.on_finished_received_cb = Mock(return_value=True)
 
         self.tls_fsm = TlsServerFsm(
             self.on_session_begin_transaction_cb,
+            self.on_client_hello_received_transition_cb,
             self.on_finished_received_cb
         )
 
@@ -26,3 +28,8 @@ class TestTlsServerFsm(unittest.TestCase):
     def test_should_proceed_to_wait_client_hello_state(self):
         self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
         self.assertEqual(self.tls_fsm.get_current_state(), TlsServerFsmState.WAIT_CLIENT_HELLO)
+
+    def test_should_call_on_session_begin_cb_with_context(self):
+        ctx = "sb ctx"
+        self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN, ctx)
+        self.on_session_begin_transaction_cb.assert_called_with(ctx)
