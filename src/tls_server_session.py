@@ -86,7 +86,9 @@ class TlsServerSession:
         self.on_data_to_send(encrypted_extension_record)
         self.handshake_messages_sent += 1
 
-        self._build_certificate_message()
+        certificate_record = self._build_certificate_message()
+        self.on_data_to_send(certificate_record)
+        self.handshake_messages_sent += 1
 
         return True
 
