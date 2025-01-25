@@ -1,6 +1,4 @@
-import binascii
 from typing import Optional
-from wsgiref.simple_server import server_version
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -21,7 +19,8 @@ from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret, \
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
-    get_server_handshake_iv, compute_new_nonce, get_finished_secret
+    get_server_handshake_iv, compute_new_nonce, get_finished_secret, get_master_secret, get_client_secret_application, \
+    get_server_secret_application, get_client_application_key
 from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent, TlsServerFsmState
 from src.utils import HandshakeMessageType, TLSVersion, RecordHeaderType
 
@@ -40,6 +39,8 @@ class TlsServerSession:
         self.client_handshake_iv: bytes = b''
         self.server_handshake_key: bytes = b''
         self.server_handshake_iv: bytes = b''
+
+        self.client_application_key: bytes = b''
 
         self.client_hello: Optional[ClientHelloMessage] = None
         self.server_hello: Optional[ServerHelloMessage] = None
@@ -143,6 +144,8 @@ class TlsServerSession:
 
     def _on_finished_received_fsm_transaction(self, ctx):
         self.client_handshake_finished = HandshakeFinishedMessageBuilder.build_from_bytes(ctx[5:])
+
+        self._compute_application_key()
         return True
 
     def _compute_handshake_keys(self):
@@ -223,3 +226,19 @@ class TlsServerSession:
             nonce
         )
 
+    def _compute_application_key(self):
+        derived_secret = get_derived_secret(self.handshake_secret)
+        master_secret = get_master_secret(derived_secret)
+
+        handshake_hash = get_records_hash_sha256(
+            self.client_hello.to_bytes(),
+            self.server_hello.to_bytes(),
+            self.encrypted_extensions.to_bytes(),
+            self.certificate_message.to_bytes(),
+            self.certificate_verify.to_bytes(),
+            self.server_handshake_finished.to_bytes(),
+        )
+
+        client_secret = get_client_secret_application(master_secret, handshake_hash)
+
+        self.client_application_key = get_client_application_key(client_secret)
