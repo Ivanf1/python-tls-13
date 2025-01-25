@@ -42,8 +42,7 @@ class RecordManager:
         :param nonce: iv
         :return: the encrypted record
         """
-        if message_type == RecordHeaderType.HANDSHAKE:
-            message += message_type.value
+        message += message_type.value
 
         header = RecordManager.build_record_header(record_type, message, tls_version)
         return header + encrypt(key, nonce, message, header)

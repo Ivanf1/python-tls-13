@@ -345,7 +345,7 @@ class TestTlsClientSession(unittest.TestCase):
                 48 5a 64 e7 e9 57 b0 89 80 cd 08 ba f9 69 8b 89 29 98 6d 11 74 d4 aa 6d d7 a7 e8 c0 86 05 2c 3c 76 d8 19 34 bd 
                 f5 9b 96 6e 39 20 31 f3 47 1a de bd dd db e8 4f cf 1f f4 08 84 6a e9 b2 8c a4 a9 e7 28 84 4a 49 3d 80 45 5d 6e 
                 af f2 05 b4 0a 1e f1 85 74 ef c0 b9 6a d3 83 af bd 8d fc 86 f8 08 7c 1f 7d c8"""))
-            expected_application_message = bytes.fromhex("""17 03 03 00 ea 04 00 00 d5 00 00 1c 20 00 00 00 00 08 00 00 
+            expected_application_message = bytes.fromhex("""04 00 00 d5 00 00 1c 20 00 00 00 00 08 00 00 
                 00 00 00 00 00 01 00 c0 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 00 49 56 44 41 54 41 49 56 44 41 54 41 
                 00 41 45 53 cb 11 9d 4d bd 2a 21 ec c2 26 a6 09 0e e8 ca 58 df 09 03 9b 35 96 f4 de 79 98 0e a3 25 d5 14 62 
                 5c 0c 21 c5 0f 03 26 1d c4 2c e7 c5 97 0c 4c 01 16 06 fb 99 8a 86 c3 fa 30 e5 5e ea 91 f1 ff f3 18 fc 7b d5 
@@ -369,7 +369,7 @@ class TestTlsClientSession(unittest.TestCase):
             session.start()
             session.on_record_received(bytes.fromhex("""17 03 03 00 15 0c da 85 f1 44 7a e2 3f a6 6d 56 f4 c5 40 84 82 
                 b1 b1 d4 c9 98"""))
-            expected_application_message = bytes.fromhex("""17 03 03 00 15 70 6f 6e 67""")
+            expected_application_message = bytes.fromhex("""70 6f 6e 67""")
             on_application_message_callback.assert_called_with(expected_application_message)
 
     def test_should_call_on_data_to_send_on_handshake_finished_message_received(self):
