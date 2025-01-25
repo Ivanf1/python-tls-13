@@ -161,6 +161,7 @@ class TlsServerSession:
         self.client_handshake_finished = HandshakeFinishedMessageBuilder.build_from_bytes(ctx[5:])
 
         self._compute_application_key()
+        self.on_connected()
         return True
 
     def _compute_handshake_keys(self):

@@ -284,3 +284,16 @@ class TestTlsServerSession(unittest.TestCase):
                 0c 70 85 84 1a 01 e4 95 85 f6 8b 4a fe e1 d7 07 e2 cb b1 a0 b4 23 aa 7e 32 d5 60 7b d9 9d d4 db 3c 9a aa ed 
                 43 d3 5d 26 b4 b1 c6 84 71 71 ea a0 7a 9b c8 cb f7 58 49 9a 00 00""")
             on_application_message_callback.assert_called_with(expected_application_message)
+
+    def test_should_call_on_connected_on_handshake_finished(self):
+        with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
+                patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
+            mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
+            mock_server_random.return_value = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            on_connected = Mock()
+            session = TlsServerSession(Mock(), self.certificate_path, self.certificate_private_key_path, on_connected, Mock())
+            session.start()
+            session.on_record_received(self.client_hello)
+            session.on_record_received(self.client_handshake_finished)
+            on_connected.assert_called_once()
+
