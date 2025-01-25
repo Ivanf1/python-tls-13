@@ -55,6 +55,8 @@ class TlsServerSession:
     def _on_client_hello_received_fsm_transaction(self, ctx):
         self.client_hello = ClientHelloMessageBuilder.build_from_bytes(ctx[5:])
         self.server_hello = ServerHelloMessageBuilder(self.public_key).build_server_hello_message()
+
+        self.on_data_to_send(self.server_hello.to_bytes())
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):

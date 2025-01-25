@@ -31,3 +31,10 @@ class TestTlsServerSession(unittest.TestCase):
         session.start()
         session.on_record_received(self.client_hello)
         self.assertEqual(session.server_hello.to_bytes()[0:1], HandshakeMessageType.SERVER_HELLO.value)
+
+    def test_should_call_on_data_to_send_with_server_hello(self):
+        on_data_to_send = Mock()
+        session = TlsServerSession(on_data_to_send, self.certificate_path, self.certificate_private_key_path, Mock())
+        session.start()
+        session.on_record_received(self.client_hello)
+        self.assertEqual(on_data_to_send.call_args[0][0][0:1], HandshakeMessageType.SERVER_HELLO.value)
