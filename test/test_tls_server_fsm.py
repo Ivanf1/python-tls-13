@@ -48,3 +48,16 @@ class TestTlsServerFsm(unittest.TestCase):
         self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
         self.tls_fsm.transition(TlsServerFsmEvent.CLIENT_HELLO_RECEIVED, ctx)
         self.on_client_hello_received_transition_cb.assert_called_with(ctx)
+
+    def test_should_proceed_to_connected_state(self):
+        self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
+        self.tls_fsm.transition(TlsServerFsmEvent.CLIENT_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsServerFsmEvent.FINISHED_RECEIVED)
+        self.assertEqual(self.tls_fsm.get_current_state(), TlsServerFsmState.CONNECTED)
+
+    def test_should_call_on_finished_received_with_context(self):
+        ctx = "fr ctx"
+        self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
+        self.tls_fsm.transition(TlsServerFsmEvent.CLIENT_HELLO_RECEIVED)
+        self.tls_fsm.transition(TlsServerFsmEvent.FINISHED_RECEIVED, ctx)
+        self.on_finished_received_cb.assert_called_with(ctx)
