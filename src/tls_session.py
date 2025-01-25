@@ -47,13 +47,14 @@ class TlsSession:
 
     server_certificate = None
 
-    def __init__(self, server_name: str, on_connected, trusted_root_certificate_path: str, on_data_to_send):
+    def __init__(self, server_name: str, on_connected, trusted_root_certificate_path: str, on_data_to_send, on_application_data):
         self.server_name = server_name
         self.on_connected = on_connected
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
         self.trusted_root_certificate_path = trusted_root_certificate_path
         self.on_data_to_send = on_data_to_send
+        self.on_application_data = on_application_data
 
         self.derived_secret: bytes or None = None
         self.handshake_secret: bytes or None = None
@@ -69,8 +70,6 @@ class TlsSession:
             on_certificate_verify_received_cb=self._on_certificate_verify_received_fsm_transaction,
             on_finished_received_cb=self._on_finished_received_fsm_transaction
         )
-
-        self.on_application_record_callbacks = []
 
     def start(self) -> bytes:
         self.client_hello = ClientHelloMessageBuilder(
@@ -129,8 +128,7 @@ class TlsSession:
                     nonce,
                 )
 
-                for cb in self.on_application_record_callbacks:
-                    cb(record)
+                self.on_application_data(record)
         else:
             self._on_handshake_message_received(record)
 
@@ -152,9 +150,6 @@ class TlsSession:
                 event = None
 
         self.tls_fsm.transition(event, record)
-
-    def register_on_application_record_callback(self, callback):
-        self.on_application_record_callbacks.append(callback)
 
     def _on_session_begin_fsm_transaction(self, _):
         early_secret = get_early_secret()

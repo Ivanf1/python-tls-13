@@ -14,7 +14,7 @@ class TestTlsSession(unittest.TestCase):
     def setUp(self):
         self.on_connected = Mock()
         self.root_certificate_path = path.join(path.dirname(path.abspath(__file__)), "data", "ca_cert.der")
-        self.tls_session = TlsSession("example.com", self.on_connected, self.root_certificate_path, Mock())
+        self.tls_session = TlsSession("example.com", self.on_connected, self.root_certificate_path, Mock(), Mock())
         self.server_hello = bytes.fromhex("""16 03 03 00 5a 02 00 00 56 03 03 a6 af 06 a4 12 18 60
          dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
          d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
@@ -33,7 +33,7 @@ class TestTlsSession(unittest.TestCase):
     # section: {server}  send handshake record
     def test_should_call_transition_on_server_hello_message_received(self):
         with patch.object(TlsFsm, "transition") as mock_transition:
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.on_record_received(self.server_hello)
             mock_transition.assert_called_with(TlsFsmEvent.SERVER_HELLO_RECEIVED, self.server_hello)
 
@@ -54,7 +54,7 @@ class TestTlsSession(unittest.TestCase):
             mock_handshake_key.return_value = bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
             mock_handshake_iv.return_value = bytes.fromhex("""9563bc8b590f671f488d2da3""")
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -70,7 +70,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
             ]
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -113,7 +113,7 @@ class TestTlsSession(unittest.TestCase):
             ]
             mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -137,7 +137,7 @@ class TestTlsSession(unittest.TestCase):
             mock_validate_signature.return_value = True
             mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -164,7 +164,7 @@ class TestTlsSession(unittest.TestCase):
 
             on_connected = Mock()
 
-            session = TlsSession("example.com", on_connected, self.root_certificate_path, Mock())
+            session = TlsSession("example.com", on_connected, self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -199,7 +199,7 @@ class TestTlsSession(unittest.TestCase):
                 75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
                 72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -235,7 +235,7 @@ class TestTlsSession(unittest.TestCase):
                 75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
                 72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -271,7 +271,7 @@ class TestTlsSession(unittest.TestCase):
                 75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
                 72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -307,7 +307,7 @@ class TestTlsSession(unittest.TestCase):
                 75 6c 66 68 65 69 6d 2e 6e 65 74 00 0a 00 16 00 1d 00 0d 00 1e 04 03 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 35 80 
                 72 d6 36 58 80 d1 ae ea 32 9a df 91 21 38 38 51 ed 21 a2 8e 3b 75 e9 65 d0 d2 cd 16 62 54"""))
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
@@ -328,8 +328,7 @@ class TestTlsSession(unittest.TestCase):
 
             on_application_message_callback = Mock()
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
-            session.register_on_application_record_callback(on_application_message_callback)
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), on_application_message_callback)
             session.start()
             session.on_record_received(bytes.fromhex("""17 03 03 00 ea 38 ad fb 1d 01 fd 95 a6 03 85 e8 bb f1 fd 8d cb 46 70 98 97 e7 d6 74 
                 c2 f7 37 0e c1 1d 8e 33 eb 4f 4f e7 f5 4b f4 dc 0b 92 fa e7 42 1c 33 c6 45 3c eb c0 73 15 96 10 a0 97 40 ab 2d 
@@ -358,8 +357,7 @@ class TestTlsSession(unittest.TestCase):
 
             on_application_message_callback = Mock()
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock())
-            session.register_on_application_record_callback(on_application_message_callback)
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, Mock(), on_application_message_callback)
             session.start()
             session.on_record_received(bytes.fromhex("""17 03 03 00 15 0c da 85 f1 44 7a e2 3f a6 6d 56 f4 c5 40 84 82 
                 b1 b1 d4 c9 98"""))
@@ -383,7 +381,7 @@ class TestTlsSession(unittest.TestCase):
 
             on_data_to_send = Mock()
 
-            session = TlsSession("example.com", Mock(), self.root_certificate_path, on_data_to_send)
+            session = TlsSession("example.com", Mock(), self.root_certificate_path, on_data_to_send, Mock())
             session.start()
             session.on_record_received(self.server_hello)
             session.on_record_received(self.encrypted_extensions)
