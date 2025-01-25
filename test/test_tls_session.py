@@ -133,6 +133,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da1"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
             ]
             mock_validate_signature.return_value = True
             mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
@@ -158,6 +159,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da1"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
             ]
             mock_validate_signature.return_value = True
             mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
@@ -188,6 +190,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da1"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
             ]
             mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
             mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
@@ -224,6 +227,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da1"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
             ]
             mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
             mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
@@ -260,6 +264,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da1"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
             ]
             mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
             mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
@@ -296,6 +301,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da1"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
             ]
             mock_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"))
             mock_public_key.return_value = X25519PublicKey.from_public_bytes(bytes.fromhex("358072d6365880d1aeea329adf9121383851ed21a28e3b75e965d0d2cd166254"))
@@ -375,6 +381,7 @@ class TestTlsSession(unittest.TestCase):
                 bytes.fromhex("""9563bc8b590f671f488d2da2"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da1"""),
                 bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
             ]
             mock_validate_signature.return_value = True
             mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True

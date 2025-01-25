@@ -60,6 +60,7 @@ class TlsSession:
         self.handshake_secret: bytes or None = None
 
         self.handshake_messages_received = 0
+        self.handshake_messages_sent = 0
         self.application_messages_received = 0
 
         self.tls_fsm = TlsFsm(
@@ -240,12 +241,13 @@ class TlsSession:
     def _build_client_handshake_finished(self, finished_hash):
         finished_key = get_finished_secret(self.client_secret)
         client_finished = HandshakeFinishedMessageBuilder().get_handshake_finished(finished_key, finished_hash)
+        nonce = compute_new_nonce(self.client_handshake_iv, self.handshake_messages_sent)
         client_finished_record = RecordManager.build_encrypted_record(
             TLSVersion.V1_2,
             RecordHeaderType.APPLICATION_DATA,
             RecordHeaderType.HANDSHAKE,
             client_finished.to_bytes(),
-            finished_key,
-            self.client_application_iv
+            self.client_handshake_key,
+            nonce
         )
         return client_finished_record
