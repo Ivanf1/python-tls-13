@@ -8,6 +8,7 @@ from cryptography import x509
 
 from src.messages.certificate_message import CertificateMessage
 from src.messages.certificate_message_builder import CertificateMessageBuilder
+from src.messages.certificate_verify_message_builder import CertificateVerifyMessageBuilder
 from src.messages.client_hello_message import ClientHelloMessage
 from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.messages.encrypted_extensions_message import EncryptedExtensionsMessage
@@ -90,6 +91,8 @@ class TlsServerSession:
         self.on_data_to_send(certificate_record)
         self.handshake_messages_sent += 1
 
+        self._build_certificate_verify_message()
+
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
@@ -133,6 +136,27 @@ class TlsServerSession:
             RecordHeaderType.APPLICATION_DATA,
             RecordHeaderType.HANDSHAKE,
             self.certificate_message.to_bytes(),
+            self.server_handshake_key,
+            nonce
+        )
+
+    def _build_certificate_verify_message(self):
+        handshake_hash = get_records_hash_sha256(
+            self.client_hello.to_bytes(),
+            self.server_hello.to_bytes(),
+            self.encrypted_extensions.to_bytes(),
+            self.certificate_message.to_bytes(),
+        )
+
+        self.certificate_verify = CertificateVerifyMessageBuilder(
+            self.certificate_private_key_path).get_certificate_verify_message(handshake_hash)
+        nonce = compute_new_nonce(self.server_handshake_iv, self.handshake_messages_sent)
+
+        return RecordManager.build_encrypted_record(
+            TLSVersion.V1_2,
+            RecordHeaderType.APPLICATION_DATA,
+            RecordHeaderType.HANDSHAKE,
+            self.certificate_verify.to_bytes(),
             self.server_handshake_key,
             nonce
         )
