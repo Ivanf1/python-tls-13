@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
+from src.fsm import FSMInvalidEventForStateError
 from src.tls_server_fsm import TlsServerFsmEvent, TlsServerFsmState, TlsServerFsm
 
 
@@ -33,3 +34,6 @@ class TestTlsServerFsm(unittest.TestCase):
         ctx = "sb ctx"
         self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN, ctx)
         self.on_session_begin_transaction_cb.assert_called_with(ctx)
+
+    def test_should_not_proceed_to_next_state_if_event_invalid_for_current_state(self):
+        self.assertRaises(FSMInvalidEventForStateError, self.tls_fsm.transition, TlsServerFsmEvent.FINISHED_RECEIVED)
