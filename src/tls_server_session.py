@@ -20,7 +20,8 @@ from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_ea
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
     get_server_handshake_iv, compute_new_nonce, get_finished_secret, get_master_secret, get_client_secret_application, \
-    get_server_secret_application, get_client_application_key, get_client_application_iv, get_server_application_key
+    get_server_secret_application, get_client_application_key, get_client_application_iv, get_server_application_key, \
+    get_server_application_iv
 from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent, TlsServerFsmState
 from src.utils import HandshakeMessageType, TLSVersion, RecordHeaderType
 
@@ -43,6 +44,7 @@ class TlsServerSession:
         self.client_application_key: bytes = b''
         self.client_application_iv: bytes = b''
         self.server_application_key: bytes = b''
+        self.server_application_iv: bytes = b''
 
         self.client_hello: Optional[ClientHelloMessage] = None
         self.server_hello: Optional[ServerHelloMessage] = None
@@ -247,3 +249,4 @@ class TlsServerSession:
         self.client_application_key = get_client_application_key(client_secret)
         self.client_application_iv = get_client_application_iv(client_secret)
         self.server_application_key = get_server_application_key(server_secret)
+        self.server_application_iv = get_server_application_iv(server_secret)
