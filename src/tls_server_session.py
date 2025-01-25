@@ -27,24 +27,25 @@ from src.utils import HandshakeMessageType, TLSVersion, RecordHeaderType
 
 
 class TlsServerSession:
-    def __init__(self, on_data_to_send, certificate_path, certificate_private_key_path, on_connected):
+    derived_secret: bytes = b''
+    client_handshake_key: bytes = b''
+    client_handshake_iv: bytes = b''
+    server_handshake_key: bytes = b''
+    server_handshake_iv: bytes = b''
+
+    client_application_key: bytes = b''
+    client_application_iv: bytes = b''
+    server_application_key: bytes = b''
+    server_application_iv: bytes = b''
+
+    def __init__(self, on_data_to_send, certificate_path, certificate_private_key_path, on_connected, on_application_data):
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
         self.on_data_to_send = on_data_to_send
         self.certificate_path = certificate_path
         self.certificate_private_key_path = certificate_private_key_path
         self.on_connected = on_connected
-
-        self.derived_secret: bytes = b''
-        self.client_handshake_key: bytes = b''
-        self.client_handshake_iv: bytes = b''
-        self.server_handshake_key: bytes = b''
-        self.server_handshake_iv: bytes = b''
-
-        self.client_application_key: bytes = b''
-        self.client_application_iv: bytes = b''
-        self.server_application_key: bytes = b''
-        self.server_application_iv: bytes = b''
+        self.on_application_data = on_application_data
 
         self.client_hello: Optional[ClientHelloMessage] = None
         self.server_hello: Optional[ServerHelloMessage] = None
@@ -56,6 +57,7 @@ class TlsServerSession:
 
         self.handshake_messages_received = 0
         self.handshake_messages_sent = 0
+        self.application_messages_received = 0
 
         self.tls_fsm = TlsServerFsm(
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
@@ -96,8 +98,17 @@ class TlsServerSession:
 
                 self._on_handshake_message_received(record)
             else:
-                pass
+                nonce = compute_new_nonce(self.client_application_iv, self.application_messages_received)
+                self.application_messages_received += 1
 
+                # Use application key
+                record = RecordManager.get_decrypted_record_payload(
+                    record,
+                    self.client_application_key,
+                    nonce,
+                )
+
+                self.on_application_data(record)
         else:
             self._on_handshake_message_received(record)
 
