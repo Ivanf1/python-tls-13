@@ -1,3 +1,4 @@
+import binascii
 import unittest
 from os import path
 from unittest.mock import patch, Mock
@@ -38,3 +39,11 @@ class TestTlsServerSession(unittest.TestCase):
         session.start()
         session.on_record_received(self.client_hello)
         self.assertEqual(on_data_to_send.call_args[0][0][0:1], HandshakeMessageType.SERVER_HELLO.value)
+
+    def test_should_extract_client_public_key(self):
+        session = TlsServerSession(Mock(), self.certificate_path, self.certificate_private_key_path, Mock())
+        session.start()
+        session.on_record_received(self.client_hello)
+        expected_client_public_key = bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70675")
+        self.assertEqual(session.client_public_key.public_bytes_raw(), expected_client_public_key)
+
