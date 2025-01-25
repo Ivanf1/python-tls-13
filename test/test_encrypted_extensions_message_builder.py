@@ -1,3 +1,4 @@
+import binascii
 import unittest
 
 from src.messages.encrypted_extensions_message_builder import EncryptedExtensionsMessageBuilder
@@ -26,3 +27,8 @@ class TestEncryptedExtensionsMessageBuilder(unittest.TestCase):
         message = EncryptedExtensionsMessageBuilder.build_from_bytes(self.data)
         expected_extensions = bytes.fromhex("")
         self.assertEqual(message.extensions, expected_extensions)
+
+    def test_should_build_encrypted_extensions_message(self):
+        message = EncryptedExtensionsMessageBuilder.get_encrypted_extensions_message()
+        expected_encrypted_extensions_message = bytes.fromhex("080000020000")
+        self.assertEqual(message.to_bytes(), expected_encrypted_extensions_message)
