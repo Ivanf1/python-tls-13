@@ -1,4 +1,3 @@
-import binascii
 from typing import Optional
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
@@ -10,7 +9,7 @@ from src.messages.server_hello_message_builder import ServerHelloMessageBuilder
 from src.record_manager import RecordManager
 from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret, \
     get_shared_secret, get_handshake_secret, get_records_hash_sha256, get_client_secret_handshake, \
-    get_client_handshake_key
+    get_client_handshake_key, get_client_handshake_iv
 from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent
 from src.utils import HandshakeMessageType
 
@@ -25,6 +24,8 @@ class TlsServerSession:
         self.on_connected = on_connected
 
         self.derived_secret: bytes = b''
+        self.client_handshake_key: bytes = b''
+        self.client_handshake_iv: bytes = b''
 
         self.client_hello: Optional[ClientHelloMessage] = None
         self.server_hello: Optional[ServerHelloMessage] = None
@@ -79,3 +80,4 @@ class TlsServerSession:
 
         client_secret = get_client_secret_handshake(self.handshake_secret, hello_hash)
         self.client_handshake_key = get_client_handshake_key(client_secret)
+        self.client_handshake_iv = get_client_handshake_iv(client_secret)
