@@ -74,7 +74,7 @@ class TlsSession:
             on_finished_received_cb=self._on_finished_received_fsm_transaction
         )
 
-    def start(self) -> bytes:
+    def start(self):
         self.client_hello = ClientHelloMessageBuilder(
             self.server_name,
             self.public_key
@@ -82,11 +82,13 @@ class TlsSession:
 
         self.tls_fsm.transition(TlsFsmEvent.SESSION_BEGIN)
 
-        return RecordManager.build_unencrypted_record(
+        client_hello_record = RecordManager.build_unencrypted_record(
             tls_version=TLSVersion.V1_0,
             record_type=RecordHeaderType.HANDSHAKE,
             message=self.client_hello.to_bytes()
         )
+
+        self.on_data_to_send(client_hello_record)
 
     def on_record_received(self, record):
         record_type = RecordManager.get_record_type(record)

@@ -14,8 +14,9 @@ from src.tls_session import TlsSession
 class TestTlsSession(unittest.TestCase):
     def setUp(self):
         self.on_connected = Mock()
+        self.on_data_to_send = Mock()
         self.root_certificate_path = path.join(path.dirname(path.abspath(__file__)), "data", "ca_cert.der")
-        self.tls_session = TlsSession("example.com", self.on_connected, self.root_certificate_path, Mock(), Mock())
+        self.tls_session = TlsSession("example.com", self.on_connected, self.root_certificate_path, self.on_data_to_send, Mock())
         self.server_hello = bytes.fromhex("""16 03 03 00 5a 02 00 00 56 03 03 a6 af 06 a4 12 18 60
          dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
          d3 e2 69 28 13 01 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 
@@ -27,8 +28,8 @@ class TestTlsSession(unittest.TestCase):
         self.handshake_finished = bytes.fromhex("""17 03 03 00 45 10 61 de 27 e5 1c 2c 9f 34 29 11 80 6f 28 2b 71 0c 10 63 2c a5 00 67 55 88 0d bf 70 06 00 2d 0e 84 fe d9 ad f2 7a 43 b5 19 23 03 e4 df 5c 28 5d 58 e3 c7 62 24 07 84 40 c0 74 23 74 74 4a ec f2 8c f3 18 2f d0""")
 
     def test_should_return_client_hello_message_on_start(self):
-        client_hello = self.tls_session.start()
-        self.assertEqual(client_hello[5:6], b'\x01')
+        self.tls_session.start()
+        self.on_data_to_send.assert_called_once()
 
     # https://datatracker.ietf.org/doc/html/rfc8448#page-7
     # section: {server}  send handshake record
@@ -396,4 +397,4 @@ class TestTlsSession(unittest.TestCase):
             session.on_record_received(self.server_certificate)
             session.on_record_received(self.server_certificate_verify)
             session.on_record_received(self.handshake_finished)
-            on_data_to_send.assert_called_once()
+            self.assertEqual(on_data_to_send.call_count, 2)
