@@ -37,3 +37,8 @@ class TestTlsServerFsm(unittest.TestCase):
 
     def test_should_not_proceed_to_next_state_if_event_invalid_for_current_state(self):
         self.assertRaises(FSMInvalidEventForStateError, self.tls_fsm.transition, TlsServerFsmEvent.FINISHED_RECEIVED)
+
+    def test_should_proceed_to_wait_finished_state(self):
+        self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
+        self.tls_fsm.transition(TlsServerFsmEvent.CLIENT_HELLO_RECEIVED)
+        self.assertEqual(self.tls_fsm.get_current_state(), TlsServerFsmState.WAIT_FINISHED)
