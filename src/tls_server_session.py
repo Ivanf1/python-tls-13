@@ -7,7 +7,8 @@ from src.messages.client_hello_message_builder import ClientHelloMessageBuilder
 from src.messages.server_hello_message import ServerHelloMessage
 from src.messages.server_hello_message_builder import ServerHelloMessageBuilder
 from src.record_manager import RecordManager
-from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret
+from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_early_secret, get_derived_secret, \
+    get_shared_secret, get_handshake_secret
 from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent
 from src.utils import HandshakeMessageType
 
@@ -61,7 +62,13 @@ class TlsServerSession:
         self.on_data_to_send(self.server_hello.to_bytes())
 
         self.client_public_key = X25519PublicKey.from_public_bytes(self.client_hello.get_public_key())
+
+        self._compute_handshake_keys()
         return True
 
     def _on_finished_received_fsm_transaction(self, ctx):
         return True
+
+    def _compute_handshake_keys(self):
+        shared_secret = get_shared_secret(self.private_key, self.client_public_key)
+        self.handshake_secret = get_handshake_secret(shared_secret, self.derived_secret)
