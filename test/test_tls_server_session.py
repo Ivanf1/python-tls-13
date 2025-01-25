@@ -57,3 +57,15 @@ class TestTlsServerSession(unittest.TestCase):
             session.on_record_received(self.client_hello)
             expected_handshake_secret = bytes.fromhex("50c9bf2ccf0bf2207aa98f64669ee533767f0259dfd0671cb65e35f6a981e5a9")
             self.assertEqual(session.handshake_secret, expected_handshake_secret)
+
+    def test_should_compute_client_handshake_key(self):
+        with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
+            patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
+            mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
+            mock_server_random.return_value = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            session = TlsServerSession(Mock(), self.certificate_path, self.certificate_private_key_path, Mock())
+            session.start()
+            session.on_record_received(self.client_hello)
+            print(binascii.hexlify(session.client_handshake_key))
+            expected_client_handshake_key = bytes.fromhex("7c0d79e865a4a5c74b87c11fa9aa15b4")
+            self.assertEqual(session.client_handshake_key, expected_client_handshake_key)
