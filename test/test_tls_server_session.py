@@ -297,3 +297,25 @@ class TestTlsServerSession(unittest.TestCase):
             session.on_record_received(self.client_handshake_finished)
             on_connected.assert_called_once()
 
+    def test_should_build_certificate_request_record(self):
+        with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
+                patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
+            mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
+            mock_server_random.return_value = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            session = TlsServerSession(Mock(), self.certificate_path, self.certificate_private_key_path, Mock(), Mock(), client_authentication=True)
+            session.start()
+            session.on_record_received(self.client_hello)
+            expected_certificate_request = bytes.fromhex("0d000009000006000d00020809")
+            self.assertEqual(session.certificate_request.to_bytes(), expected_certificate_request)
+
+    def test_should_certificate_request_record(self):
+        with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
+                patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
+            mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
+            mock_server_random.return_value = bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
+            on_data_to_send = Mock()
+            session = TlsServerSession(on_data_to_send, self.certificate_path, self.certificate_private_key_path, Mock(), Mock(), client_authentication=True)
+            session.start()
+            session.on_record_received(self.client_hello)
+            expected_certificate_request = bytes.fromhex("170303001e42b1354fa77f5a30c210e2aa89d50e1922b56ef1cc81ca46f388590c2500")
+            self.assertEqual(on_data_to_send.call_args_list[2][0][0], expected_certificate_request)
