@@ -49,7 +49,8 @@ class TlsServerSession:
             certificate_private_key_path,
             on_connected,
             on_application_data,
-            client_authentication=False
+            client_authentication=False,
+            trusted_root_certificate_path=None
     ):
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
@@ -59,13 +60,14 @@ class TlsServerSession:
         self.on_connected = on_connected
         self.on_application_data = on_application_data
         self.client_authentication = client_authentication
-        self.trusted_root_certificate_path = None
+        self.trusted_root_certificate_path = trusted_root_certificate_path
 
         self.client_hello: Optional[ClientHelloMessage] = None
         self.server_hello: Optional[ServerHelloMessage] = None
         self.encrypted_extensions: Optional[EncryptedExtensionsMessage] = None
         self.certificate_request: Optional[CertificateRequestMessage] = None
-        self.certificate_message: Optional[CertificateMessage] = None
+        self.client_certificate_message: Optional[CertificateMessage] = None
+        self.server_certificate_message: Optional[CertificateMessage] = None
 
         self.handshake_messages_for_hash = []
 
@@ -78,6 +80,7 @@ class TlsServerSession:
         self.application_messages_sent = 0
 
         self.tls_fsm = TlsServerFsm(
+            client_authentication=self.client_authentication,
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
             on_client_hello_received_transaction_cb=self._on_client_hello_received_fsm_transaction,
             on_client_certificate_received_transaction_cb=self._on_client_certificate_received_transaction_cb,
@@ -93,6 +96,8 @@ class TlsServerSession:
 
         encrypted_handshake_states = [
             TlsServerFsmState.WAIT_CLIENT_HELLO,
+            TlsServerFsmState.WAIT_CERTIFICATE,
+            TlsServerFsmState.WAIT_CERTIFICATE_VERIFY,
             TlsServerFsmState.WAIT_FINISHED,
         ]
 
@@ -151,6 +156,8 @@ class TlsServerSession:
         match message_type:
             case HandshakeMessageType.CLIENT_HELLO:
                 event = TlsServerFsmEvent.CLIENT_HELLO_RECEIVED
+            case HandshakeMessageType.CERTIFICATE:
+                event = TlsServerFsmEvent.CERTIFICATE_RECEIVED
             case HandshakeMessageType.FINISHED:
                 event = TlsServerFsmEvent.FINISHED_RECEIVED
             case _:
@@ -192,7 +199,7 @@ class TlsServerSession:
             self.handshake_messages_sent += 1
 
         certificate_record = self._build_certificate_message()
-        self.handshake_messages_for_hash.append(self.certificate_message.to_bytes())
+        self.handshake_messages_for_hash.append(self.server_certificate_message.to_bytes())
         self.on_data_to_send(certificate_record)
         self.handshake_messages_sent += 1
 
@@ -208,8 +215,21 @@ class TlsServerSession:
 
         return True
 
-    def _on_client_certificate_received_transaction_cb(self):
-        return True
+    def _on_client_certificate_received_transaction_cb(self, ctx):
+        self.client_certificate_message = CertificateMessageBuilder.build_from_bytes(ctx[5:])
+
+        with open(self.trusted_root_certificate_path, "rb") as cert_file:
+            trusted_root_certificate = x509.load_der_x509_certificate(cert_file.read(), default_backend())
+
+        self.client_certificate = x509.load_der_x509_certificate(self.client_certificate_message.certificate, default_backend())
+
+        try:
+            self.client_certificate.verify_directly_issued_by(trusted_root_certificate)
+            self.handshake_messages_for_hash.append(self.client_certificate_message)
+            # TODO: validate the certificate validity period
+            return True
+        except:
+            return False
 
     def _on_client_certificate_verify_received_transaction_cb(self):
         return True
@@ -264,14 +284,14 @@ class TlsServerSession:
             certificate = x509.load_der_x509_certificate(cert_file.read(), default_backend())
 
         certificate_bytes = certificate.public_bytes(encoding=Encoding.DER)
-        self.certificate_message = CertificateMessageBuilder(certificate_bytes).get_certificate_message()
+        self.server_certificate_message = CertificateMessageBuilder(certificate_bytes).get_certificate_message()
         nonce = compute_new_nonce(self.server_handshake_iv, self.handshake_messages_sent)
 
         return RecordManager.build_encrypted_record(
             TLSVersion.V1_2,
             RecordHeaderType.APPLICATION_DATA,
             RecordHeaderType.HANDSHAKE,
-            self.certificate_message.to_bytes(),
+            self.server_certificate_message.to_bytes(),
             self.server_handshake_key,
             nonce
         )
