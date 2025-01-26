@@ -8,3 +8,8 @@ class TestCertificateRequestMessageBuilder(unittest.TestCase):
         extension = CertificateRequestMessageBuilder().get_signature_algorithms_extension()
         expected_extension = bytes.fromhex("00 0d 00 02 08 09")
         self.assertEqual(extension, expected_extension)
+
+    def test_should_build_certificate_request_message(self):
+        certificate_request_message = CertificateRequestMessageBuilder().get_certificate_request_message()
+        expected_certificate_request_message = bytes.fromhex("""0d 00 00 09 00 00 06 00 0d 00 02 08 09""")
+        self.assertEqual(certificate_request_message.to_bytes(), expected_certificate_request_message)

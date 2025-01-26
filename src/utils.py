@@ -10,6 +10,7 @@ class HandshakeMessageType(Enum):
     SERVER_HELLO = b'\x02'
     ENCRYPTED_EXTENSIONS = b'\x08'
     CERTIFICATE = b'\x0b'
+    CERTIFICATE_REQUEST = b'\x0d'
     CERTIFICATE_VERIFY = b'\x0f'
     FINISHED = b'\x14'
 
