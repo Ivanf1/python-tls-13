@@ -239,6 +239,7 @@ class TlsServerSession:
         public_key = self.client_certificate.public_key()
 
         handshake_hash = get_records_hash_sha256(*self.handshake_messages_for_hash)
+        self.handshake_messages_for_hash.append(self.client_certificate_verify_message.to_bytes())
 
         return validate_certificate_verify_signature(handshake_hash, public_key, self.client_certificate_verify_message.signature)
 
