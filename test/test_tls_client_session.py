@@ -15,6 +15,7 @@ class TestTlsClientSession(unittest.TestCase):
         self.on_connected = Mock()
         self.on_data_to_send = Mock()
         self.root_certificate_path = path.join(path.dirname(path.abspath(__file__)), "data", "ca_cert.der")
+        self.client_certificate_path = path.join(path.dirname(path.abspath(__file__)), "data", "client_cert.der")
         self.tls_session = TlsClientSession("example.com", self.on_connected, self.root_certificate_path, self.on_data_to_send, Mock())
         self.server_hello = bytes.fromhex("""16 03 03 00 5a 02 00 00 56 03 03 a6 af 06 a4 12 18 60
          dc 5e 6e 60 24 9c d3 4c 95 93 0c 8a c5 cb 14 34 da c1 55 77 2e
@@ -101,7 +102,7 @@ class TestTlsClientSession(unittest.TestCase):
             44 62 a0 6b 42 c6 d5 ba 68 8e ac 3a 01 7b dd fc 8e 2c fc ad 27 cb 69 d3 cc dc a2 80 41 44 65 d3 ae 34 8c 
             e0 f3 4a b2 fb 9c 61 83 71 31 2b 19 10 41 64 1c 23 7f 11 a5 d6 5c 84 4f 04 04 84 99 38 71 2b 95 9e d6 85 
             bc 5c 5d d6 45 ed 19 90 94 73 40 29 26 dc b4 0e 34 69 a1 59 41 e8 e2 cc a8 4b b6 08 46 36 a0 00 00""")
-            self.assertEqual(session.certificate_message.to_bytes(), expected_certificate_record)
+            self.assertEqual(session.server_certificate_message.to_bytes(), expected_certificate_record)
 
     def test_should_store_certificate_verify_message_on_certificate_verify_message_received(self):
         with patch.object(TlsClientSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
@@ -122,7 +123,7 @@ class TestTlsClientSession(unittest.TestCase):
             session.on_record_received(self.server_certificate)
             session.on_record_received(self.server_certificate_verify)
             expected_certificate_verify_record = bytes.fromhex("""0f 00 01 04 08 04 01 00 5c bb 24 c0 40 93 32 da a9 20 bb ab bd b9 bd 50 17 0b e4 9c fb e0 a4 10 7f ca 6f fb 10 68 e6 5f 96 9e 6d e7 d4 f9 e5 60 38 d6 7c 69 c0 31 40 3a 7a 7c 0b cc 86 83 e6 57 21 a0 c7 2c c6 63 40 19 ad 1d 3a d2 65 a8 12 61 5b a3 63 80 37 20 84 f5 da ec 7e 63 d3 f4 93 3f 27 22 74 19 a6 11 03 46 44 dc db c7 be 3e 74 ff ac 47 3f aa ad de 8c 2f c6 5f 32 65 77 3e 7e 62 de 33 86 1f a7 05 d1 9c 50 6e 89 6c 8d 82 f5 bc f3 5f ec e2 59 b7 15 38 11 5e 9c 8c fb a6 2e 49 bb 84 74 f5 85 87 b1 1b 8a e3 17 c6 33 e9 c7 6c 79 1d 46 62 84 ad 9c 4f f7 35 a6 d2 e9 63 b5 9b bc a4 40 a3 07 09 1a 1b 4e 46 bc c7 a2 f9 fb 2f 1c 89 8e cb 19 91 8b e4 12 1d 7e 8e d0 4c d5 0c 9a 59 e9 87 98 01 07 bb bf 29 9c 23 2e 7f db e1 0a 4c fd ae 5c 89 1c 96 af df f9 4b 54 cc d2 bc 19 d3 cd aa 66 44 85 9c""")
-            self.assertEqual(session.certificate_verify_message.to_bytes(), expected_certificate_verify_record)
+            self.assertEqual(session.server_certificate_verify_message.to_bytes(), expected_certificate_verify_record)
 
     def test_should_store_handshake_finished_message_on_handshake_finished_message_received(self):
         with patch.object(TlsClientSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
@@ -415,3 +416,33 @@ class TestTlsClientSession(unittest.TestCase):
             session.on_record_received(self.certificate_request)
             expected_certificate_request = bytes.fromhex("0d 000009 000006 000d00020809")
             self.assertEqual(session.certificate_request.to_bytes(), expected_certificate_request)
+
+    def test_should_build_client_certificate_message_on_handshake_finished_received(self):
+        with patch.object(TlsClientSession, "server_handshake_key", new_callable=PropertyMock) as mock_handshake_key, \
+                patch("src.tls_client_session.compute_new_nonce") as mock_handshake_iv, \
+                patch("src.tls_client_session.validate_certificate_verify_signature") as mock_validate_signature, \
+                patch.object(TlsClientSession, "server_certificate", new_callable=PropertyMock) as mock_validate_certificate_issued_by:
+            mock_handshake_key.return_value= bytes.fromhex("""9f13575ce3f8cfc1df64a77ceaffe89700b492ad31b4fab01c4792be1b266b7f""")
+            mock_handshake_iv.side_effect = [
+                bytes.fromhex("""9563bc8b590f671f488d2da3"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da3"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da2"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da1"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da0"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
+                bytes.fromhex("""9563bc8b590f671f488d2da8"""),
+            ]
+
+            mock_validate_signature.return_value = True
+            mock_validate_certificate_issued_by.verify_directly_issued_by.return_value = True
+
+            session = TlsClientSession("example.com", Mock(), self.root_certificate_path, Mock(), Mock(), certificate_path=self.client_certificate_path)
+            session.start()
+            session.on_record_received(self.server_hello)
+            session.on_record_received(self.encrypted_extensions)
+            session.on_record_received(self.certificate_request)
+            session.on_record_received(self.server_certificate)
+            session.on_record_received(self.server_certificate_verify)
+            session.on_record_received(self.handshake_finished)
+            expected_client_certificate_message = bytes.fromhex("0b0003ff000003fb0003f6308203f2308202daa0030201020214282641bd2d3a3bf80ba1a5dfd8d36edcf6d08b2a300d06092a864886f70d01010b050030818e310b30090603550406130249543110300e06035504080c0753616c65726e6f3110300e06035504070c0753616c65726e6f31123010060355040a0c09556e6973615f696f7431123010060355040b0c09556e6973615f696f743112301006035504030c09556e6973615f696f74311f301d06092a864886f70d0109011610636140756e6973612d696f742e636f6d301e170d3235303132323132313630375a170d3236303132323132313630375a308192310b30090603550406130249543110300e06035504080c0753616c65726e6f3110300e06035504070c0753616c65726e6f31123010060355040a0c09556e6973615f696f7431123010060355040b0c09556e6973615f696f743112301006035504030c09556e6973615f696f743123302106092a864886f70d0109011614636c69656e7440756e6973612d696f742e636f6d30820122300d06092a864886f70d01010105000382010f003082010a0282010100c8ee63d5011d33875166bedb472b9ed9e372ec2d69e8b23a63280dd214e15a1637be9a9dcebd2de0c29d18323090903fb5b9a5c60d9e5ce6227ed2763e2598d9902a41210d3582ea6dace666f0a64c7232e2a52d061f7af473a14cec272038fe16f0b62f4d641f9237e8d5ce94542111cbcab22c6ef05037db37b83ebfd50ff0db88ea33cf01b67a3886cab978eefe0ecb96054dc01bb3d035b0fd93fab68376ec867c3ea883e702d04bf4f4a6bdf833e1a856c5cb42e20c3296e0988011698ba5cfb0a7c99902d51561c8e78758300f2a0afd44c857f4316e607a9385bfd477aba6d150d1c92ff9aa284a43aacdd5fce9ab5375326aef0f0ec6ada9e6ab83150203010001a3423040301d0603551d0e041604145aa57b79e651325fe76a3ba2a40b423e5c74edcf301f0603551d23041830168014bc750ec2a469bc813f0576eec5c2a21c08851b6a300d06092a864886f70d01010b0500038201010020a60c3cbe38e814280800d547bedc417d0a6c6674f68d9ec9827ddfd8b847f3c9db25de05005d0b185a852b223f06a5c771e609d92a6bbfcee8b15acf4a3e264f1482e105ba30bf7fdf93b1da86e01d0f5d3c9ba48af09f850da1e26a2b29e0476926513c5a6fd6cb1f8470b47562745ca56d625351186908720ad4f34d08379b4b0ae0208d455dbdb1591a735312f3808ef6a9b91454312a6bed2201df662121d6be26ab31b29a068ace6195a4e0862a20c2c8d22d4268e58160fd1cfdb5981545061e9c0f6f581722e0ab9d3ed1b615c335064a1b8c784b82c1dc6384c06cdf3c233024478fcbf64e3b45e48b0d5c8c3d3e6e1d1e6bcc5cebc1a326bc05720000")
+            self.assertEqual(session.client_certificate_message.to_bytes(), expected_client_certificate_message)

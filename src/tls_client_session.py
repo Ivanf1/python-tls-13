@@ -1,11 +1,14 @@
+import binascii
 from typing import Optional
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
-from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.backends import default_backend
+from cryptography import x509
 
 from src.messages.certificate_message import CertificateMessage
 from src.messages.certificate_message_builder import CertificateMessageBuilder
+from src.messages.certificate_request_message import CertificateRequestMessage
 from src.messages.certificate_request_message_builder import CertificateRequestMessageBuilder
 from src.messages.certificate_verify_message import CertificateVerifyMessage
 from src.messages.certificate_verify_message_builder import CertificateVerifyMessageBuilder
@@ -44,13 +47,23 @@ class TlsClientSession:
     client_hello: Optional[ClientHelloMessage] = None
     server_hello: Optional[ServerHelloMessage] = None
     encrypted_extensions: Optional[EncryptedExtensionsMessage] = None
-    certificate_message: Optional[CertificateMessage] = None
-    certificate_verify_message: Optional[CertificateVerifyMessage] = None
+    certificate_request: Optional[CertificateRequestMessage] = None
+    server_certificate_message: Optional[CertificateMessage] = None
+    server_certificate_verify_message: Optional[CertificateVerifyMessage] = None
     server_finished_message: Optional[HandshakeFinishedMessage] = None
+    client_certificate_message: Optional[CertificateMessage] = None
 
     server_certificate = None
 
-    def __init__(self, server_name: str, on_connected, trusted_root_certificate_path: str, on_data_to_send, on_application_data):
+    def __init__(
+            self,
+            server_name: str,
+            on_connected,
+            trusted_root_certificate_path: str,
+            on_data_to_send,
+            on_application_data,
+            certificate_path=None
+    ):
         self.server_name = server_name
         self.on_connected = on_connected
         self.private_key = get_X25519_private_key()
@@ -58,6 +71,7 @@ class TlsClientSession:
         self.trusted_root_certificate_path = trusted_root_certificate_path
         self.on_data_to_send = on_data_to_send
         self.on_application_data = on_application_data
+        self.certificate_path = certificate_path
 
         self.derived_secret: bytes = b''
         self.handshake_secret: bytes = b''
@@ -206,12 +220,12 @@ class TlsClientSession:
         return True
 
     def _on_certificate_received_fsm_transaction(self, ctx):
-        self.certificate_message = CertificateMessageBuilder.build_from_bytes(ctx[5:])
+        self.server_certificate_message = CertificateMessageBuilder.build_from_bytes(ctx[5:])
 
         with open(self.trusted_root_certificate_path, "rb") as cert_file:
             trusted_root_certificate = x509.load_der_x509_certificate(cert_file.read(), default_backend())
 
-        self.server_certificate = x509.load_der_x509_certificate(self.certificate_message.certificate, default_backend())
+        self.server_certificate = x509.load_der_x509_certificate(self.server_certificate_message.certificate, default_backend())
 
         try:
             self.server_certificate.verify_directly_issued_by(trusted_root_certificate)
@@ -221,7 +235,7 @@ class TlsClientSession:
             return False
 
     def _on_certificate_verify_received_fsm_transaction(self, ctx):
-        self.certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx[5:])
+        self.server_certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx[5:])
 
         public_key = self.server_certificate.public_key()
 
@@ -229,10 +243,10 @@ class TlsClientSession:
             self.client_hello.to_bytes(),
             self.server_hello.to_bytes(),
             self.encrypted_extensions.to_bytes(),
-            self.certificate_message.to_bytes(),
+            self.server_certificate_message.to_bytes(),
         )
 
-        return validate_certificate_verify_signature(handshake_hash, public_key, self.certificate_verify_message.signature)
+        return validate_certificate_verify_signature(handshake_hash, public_key, self.server_certificate_verify_message.signature)
 
     def _on_finished_received_fsm_transaction(self, ctx):
         self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx[5:])
@@ -240,14 +254,32 @@ class TlsClientSession:
         derived_secret = get_derived_secret(self.handshake_secret)
         master_secret = get_master_secret(derived_secret)
 
-        handshake_hash = get_records_hash_sha256(
-            self.client_hello.to_bytes(),
-            self.server_hello.to_bytes(),
-            self.encrypted_extensions.to_bytes(),
-            self.certificate_message.to_bytes(),
-            self.certificate_verify_message.to_bytes(),
-            self.server_finished_message.to_bytes(),
-        )
+        if self.certificate_request is not None:
+            # build and send client certificate
+            certificate_record = self._build_certificate_message()
+            self.on_data_to_send(certificate_record)
+            self.handshake_messages_sent += 1
+
+        if self.certificate_request is not None:
+            handshake_hash = get_records_hash_sha256(
+                self.client_hello.to_bytes(),
+                self.server_hello.to_bytes(),
+                self.encrypted_extensions.to_bytes(),
+                self.certificate_request.to_bytes(),
+                self.server_certificate_message.to_bytes(),
+                self.server_certificate_verify_message.to_bytes(),
+                self.server_finished_message.to_bytes(),
+                self.client_certificate_message.to_bytes(),
+            )
+        else:
+            handshake_hash = get_records_hash_sha256(
+                self.client_hello.to_bytes(),
+                self.server_hello.to_bytes(),
+                self.encrypted_extensions.to_bytes(),
+                self.server_certificate_message.to_bytes(),
+                self.server_certificate_verify_message.to_bytes(),
+                self.server_finished_message.to_bytes(),
+            )
 
         self.client_secret = get_client_secret_application(master_secret, handshake_hash)
         server_secret = get_server_secret_application(master_secret, handshake_hash)
@@ -263,6 +295,23 @@ class TlsClientSession:
 
         self.on_connected()
         return True
+
+    def _build_certificate_message(self):
+        with open(self.certificate_path, "rb") as cert_file:
+            certificate = x509.load_der_x509_certificate(cert_file.read(), default_backend())
+
+        certificate_bytes = certificate.public_bytes(encoding=Encoding.DER)
+        self.client_certificate_message = CertificateMessageBuilder(certificate_bytes).get_certificate_message()
+        nonce = compute_new_nonce(self.client_handshake_iv, self.handshake_messages_sent)
+
+        return RecordManager.build_encrypted_record(
+            TLSVersion.V1_2,
+            RecordHeaderType.APPLICATION_DATA,
+            RecordHeaderType.HANDSHAKE,
+            self.client_certificate_message.to_bytes(),
+            self.client_handshake_key,
+            nonce
+        )
 
     def _build_client_handshake_finished(self, finished_hash):
         finished_key = get_finished_secret(self.client_secret)
