@@ -62,7 +62,9 @@ class TlsClientSession:
             trusted_root_certificate_path: str,
             on_data_to_send,
             on_application_data,
-            certificate_path=None
+            certificate_path=None,
+            certificate_private_key_path=None
+
     ):
         self.server_name = server_name
         self.on_connected = on_connected
@@ -72,6 +74,7 @@ class TlsClientSession:
         self.on_data_to_send = on_data_to_send
         self.on_application_data = on_application_data
         self.certificate_path = certificate_path
+        self.certificate_private_key_path = certificate_private_key_path
 
         self.handshake_messages_for_hash = []
 
@@ -270,6 +273,11 @@ class TlsClientSession:
             self.on_data_to_send(certificate_record)
             self.handshake_messages_sent += 1
 
+            # build and send client certificate verify
+            certificate_verify_record = self._build_certificate_verify_message()
+            self.on_data_to_send(certificate_verify_record)
+            self.handshake_messages_sent += 1
+
         handshake_hash = get_records_hash_sha256(*self.handshake_messages_for_hash)
 
         self.client_secret = get_client_secret_application(master_secret, handshake_hash)
@@ -302,6 +310,24 @@ class TlsClientSession:
             RecordHeaderType.APPLICATION_DATA,
             RecordHeaderType.HANDSHAKE,
             self.client_certificate_message.to_bytes(),
+            self.client_handshake_key,
+            nonce
+        )
+
+    def _build_certificate_verify_message(self):
+        self.handshake_hash = get_records_hash_sha256(*self.handshake_messages_for_hash)
+
+        self.certificate_verify = CertificateVerifyMessageBuilder(
+            self.certificate_private_key_path).get_certificate_verify_message(self.handshake_hash)
+        self.handshake_messages_for_hash.append(self.certificate_verify.to_bytes())
+
+        nonce = compute_new_nonce(self.client_handshake_iv, self.handshake_messages_sent)
+
+        return RecordManager.build_encrypted_record(
+            TLSVersion.V1_2,
+            RecordHeaderType.APPLICATION_DATA,
+            RecordHeaderType.HANDSHAKE,
+            self.certificate_verify.to_bytes(),
             self.client_handshake_key,
             nonce
         )
