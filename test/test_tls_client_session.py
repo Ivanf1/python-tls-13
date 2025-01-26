@@ -1,4 +1,3 @@
-import binascii
 import unittest
 from os import path
 from unittest.mock import patch, PropertyMock, Mock

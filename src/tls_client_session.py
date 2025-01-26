@@ -96,6 +96,7 @@ class TlsClientSession:
 
         encrypted_handshake_states = [
             TlsClientFsmState.WAIT_ENCRYPTED_EXTENSIONS,
+            TlsClientFsmState.WAIT_CERTIFICATE_OR_CERTIFICATE_REQUEST,
             TlsClientFsmState.WAIT_CERTIFICATE,
             TlsClientFsmState.WAIT_CERTIFICATE_VERIFY,
             TlsClientFsmState.WAIT_FINISHED,
