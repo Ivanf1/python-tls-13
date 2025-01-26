@@ -1,5 +1,3 @@
-import binascii
-from time import sleep
 from typing import Optional
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey

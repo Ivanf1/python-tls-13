@@ -6,6 +6,7 @@ from cryptography.hazmat.backends import default_backend
 
 from src.messages.certificate_message import CertificateMessage
 from src.messages.certificate_message_builder import CertificateMessageBuilder
+from src.messages.certificate_request_message_builder import CertificateRequestMessageBuilder
 from src.messages.certificate_verify_message import CertificateVerifyMessage
 from src.messages.certificate_verify_message_builder import CertificateVerifyMessageBuilder
 from src.messages.client_hello_message import ClientHelloMessage
@@ -70,6 +71,7 @@ class TlsClientSession:
             on_session_begin_transaction_cb=self._on_session_begin_fsm_transaction,
             on_server_hello_received_cb=self._on_server_hello_received_fsm_transaction,
             on_encrypted_extensions_received_cb=self._on_encrypted_extensions_fsm_transaction,
+            on_certificate_request_received_cb=self._on_certificate_request_fsm_transaction,
             on_certificate_received_cb=self._on_certificate_received_fsm_transaction,
             on_certificate_verify_received_cb=self._on_certificate_verify_received_fsm_transaction,
             on_finished_received_cb=self._on_finished_received_fsm_transaction
@@ -159,6 +161,8 @@ class TlsClientSession:
                 event = TlsClientFsmEvent.SERVER_HELLO_RECEIVED
             case HandshakeMessageType.ENCRYPTED_EXTENSIONS:
                 event = TlsClientFsmEvent.ENCRYPTED_EXTENSIONS_RECEIVED
+            case HandshakeMessageType.CERTIFICATE_REQUEST:
+                event = TlsClientFsmEvent.CERTIFICATE_REQUEST_RECEIVED
             case HandshakeMessageType.CERTIFICATE:
                 event = TlsClientFsmEvent.CERTIFICATE_RECEIVED
             case HandshakeMessageType.CERTIFICATE_VERIFY:
@@ -195,6 +199,10 @@ class TlsClientSession:
 
     def _on_encrypted_extensions_fsm_transaction(self, ctx):
         self.encrypted_extensions = EncryptedExtensionsMessageBuilder.build_from_bytes(ctx[5:])
+        return True
+
+    def _on_certificate_request_fsm_transaction(self, ctx):
+        self.certificate_request = CertificateRequestMessageBuilder.build_from_bytes(ctx[5:])
         return True
 
     def _on_certificate_received_fsm_transaction(self, ctx):

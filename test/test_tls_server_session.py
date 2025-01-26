@@ -310,7 +310,7 @@ class TestTlsServerSession(unittest.TestCase):
             expected_certificate_request = bytes.fromhex("0d000009000006000d00020809")
             self.assertEqual(session.certificate_request.to_bytes(), expected_certificate_request)
 
-    def test_should_certificate_request_record(self):
+    def test_should_send_certificate_request_record(self):
         with patch("src.tls_server_session.get_X25519_private_key") as mock_server_private_key, \
                 patch("src.messages.server_hello_message_builder.get_32_random_bytes") as mock_server_random:
             mock_server_private_key.return_value = X25519PrivateKey.from_private_bytes(bytes.fromhex("080d0f5fc5c556684df38ae7bbce90a1e1fae852ad65e46a78d7e81402b70677"))
