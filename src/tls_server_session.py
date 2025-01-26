@@ -25,7 +25,7 @@ from src.tls_crypto import get_X25519_private_key, get_X25519_public_key, get_ea
     get_client_handshake_key, get_client_handshake_iv, get_server_secret_handshake, get_server_handshake_key, \
     get_server_handshake_iv, compute_new_nonce, get_finished_secret, get_master_secret, get_client_secret_application, \
     get_server_secret_application, get_client_application_key, get_client_application_iv, get_server_application_key, \
-    get_server_application_iv
+    get_server_application_iv, validate_certificate_verify_signature
 from src.tls_server_fsm import TlsServerFsm, TlsServerFsmEvent, TlsServerFsmState
 from src.utils import HandshakeMessageType, TLSVersion, RecordHeaderType
 
@@ -41,6 +41,8 @@ class TlsServerSession:
     client_application_iv: bytes = b''
     server_application_key: bytes = b''
     server_application_iv: bytes = b''
+
+    client_certificate = None
 
     def __init__(
             self,
@@ -158,6 +160,8 @@ class TlsServerSession:
                 event = TlsServerFsmEvent.CLIENT_HELLO_RECEIVED
             case HandshakeMessageType.CERTIFICATE:
                 event = TlsServerFsmEvent.CERTIFICATE_RECEIVED
+            case HandshakeMessageType.CERTIFICATE_VERIFY:
+                event = TlsServerFsmEvent.CERTIFICATE_VERIFY_RECEIVED
             case HandshakeMessageType.FINISHED:
                 event = TlsServerFsmEvent.FINISHED_RECEIVED
             case _:
@@ -225,14 +229,20 @@ class TlsServerSession:
 
         try:
             self.client_certificate.verify_directly_issued_by(trusted_root_certificate)
-            self.handshake_messages_for_hash.append(self.client_certificate_message)
+            self.handshake_messages_for_hash.append(self.client_certificate_message.to_bytes())
             # TODO: validate the certificate validity period
             return True
         except:
             return False
 
-    def _on_client_certificate_verify_received_transaction_cb(self):
-        return True
+    def _on_client_certificate_verify_received_transaction_cb(self, ctx):
+        self.client_certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx[5:])
+
+        public_key = self.client_certificate.public_key()
+
+        handshake_hash = get_records_hash_sha256(*self.handshake_messages_for_hash)
+
+        return validate_certificate_verify_signature(handshake_hash, public_key, self.client_certificate_verify_message.signature)
 
     def _on_finished_received_fsm_transaction(self, ctx):
         self.client_handshake_finished = HandshakeFinishedMessageBuilder.build_from_bytes(ctx[5:])
