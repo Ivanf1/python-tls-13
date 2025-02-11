@@ -1,4 +1,3 @@
-import binascii
 from typing import Optional
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
@@ -66,6 +65,19 @@ class TlsClientSession:
             certificate_private_key_path=None
 
     ):
+        """
+        Initializes a TLS 1.3 Client session.
+
+        :param server_name: The name of the server that this session should connect to
+        :param on_connected: Callback to call when the handshake is finished and a connection is established
+        :param trusted_root_certificate_path: The root certificate to use to validate the server certificate
+        :param on_data_to_send: Callback to call when the session requires data to be sent
+        :param on_application_data: Callback to call when application data is received
+        :param certificate_path: [Optional] The path of the certificate to use for this session for client authentication
+        :param certificate_private_key_path: [Optional] The path of the private key of the certificate
+        """
+        self.should_end = False
+
         self.server_name = server_name
         self.on_connected = on_connected
         self.private_key = get_X25519_private_key()
@@ -97,6 +109,10 @@ class TlsClientSession:
         )
 
     def start(self):
+        """
+        Starts the session.
+
+        """
         self.client_hello = ClientHelloMessageBuilder(
             self.server_name,
             self.public_key
@@ -114,7 +130,19 @@ class TlsClientSession:
 
         self.on_data_to_send(client_hello_record)
 
+    def end(self):
+        """
+        Ends the session.
+
+        """
+        pass
+
     def on_record_received(self, record):
+        """
+        Call this function when a message needs to be processed by the session.
+
+        :param record: The message
+        """
         record_type = RecordManager.get_record_type(record)
 
         encrypted_handshake_states = [
@@ -162,6 +190,12 @@ class TlsClientSession:
             self._on_handshake_message_received(record)
 
     def build_application_message(self, payload):
+        """
+        Builds an encrypted message.
+
+        :param payload: The payload of the message
+        :return: Encrypted message
+        """
         nonce = compute_new_nonce(self.client_application_iv, self.application_messages_sent)
         self.application_messages_sent += 1
 
@@ -227,6 +261,7 @@ class TlsClientSession:
 
     def _on_certificate_request_fsm_transaction(self, ctx):
         self.certificate_request = CertificateRequestMessageBuilder.build_from_bytes(ctx[5:])
+        self.handshake_messages_for_hash.append(self.certificate_request.to_bytes())
         return True
 
     def _on_certificate_received_fsm_transaction(self, ctx):
@@ -247,18 +282,14 @@ class TlsClientSession:
 
     def _on_certificate_verify_received_fsm_transaction(self, ctx):
         self.server_certificate_verify_message = CertificateVerifyMessageBuilder.build_from_bytes(ctx[5:])
-        self.handshake_messages_for_hash.append(self.server_certificate_verify_message.to_bytes())
 
         public_key = self.server_certificate.public_key()
 
-        handshake_hash = get_records_hash_sha256(
-            self.client_hello.to_bytes(),
-            self.server_hello.to_bytes(),
-            self.encrypted_extensions.to_bytes(),
-            self.server_certificate_message.to_bytes(),
-        )
+        handshake_hash = get_records_hash_sha256(*self.handshake_messages_for_hash)
 
-        return validate_certificate_verify_signature(handshake_hash, public_key, self.server_certificate_verify_message.signature)
+        valid = validate_certificate_verify_signature(handshake_hash, public_key, self.server_certificate_verify_message.signature)
+        self.handshake_messages_for_hash.append(self.server_certificate_verify_message.to_bytes())
+        return valid
 
     def _on_finished_received_fsm_transaction(self, ctx):
         self.server_finished_message = HandshakeFinishedMessageBuilder.build_from_bytes(ctx[5:])

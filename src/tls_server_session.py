@@ -52,6 +52,20 @@ class TlsServerSession:
             client_authentication=False,
             trusted_root_certificate_path=None
     ):
+        """
+        Initializes a TLS 1.3 Server session.
+
+        :param on_data_to_send: Callback to call when the session requires data to be sent
+        :param certificate_path: The path of the certificate to use for this session for the server authentication
+        :param certificate_private_key_path: The path of the private key of the certificate
+        :param on_connected: Callback to call when the handshake is finished and a connection is established
+        :param on_application_data: Callback to call when the session requires data to be sent
+        :param client_authentication: **True** if client authentication is required. Defaults to **False**
+        :param trusted_root_certificate_path: The root certificate to use to validate the client certificate if
+        client authentication is required
+        """
+        self.should_end = False
+
         self.private_key = get_X25519_private_key()
         self.public_key = get_X25519_public_key(self.private_key)
         self.on_data_to_send = on_data_to_send
@@ -89,9 +103,25 @@ class TlsServerSession:
         )
 
     def start(self):
+        """
+        Starts the session.
+
+        """
         self.tls_fsm.transition(TlsServerFsmEvent.SESSION_BEGIN)
 
+    def end(self):
+        """
+        Ends the session.
+
+        """
+        pass
+
     def on_record_received(self, record):
+        """
+        Call this function when a message needs to be processed by the session.
+
+        :param record: The message
+        """
         record_type = RecordManager.get_record_type(record)
 
         encrypted_handshake_states = [
@@ -138,6 +168,12 @@ class TlsServerSession:
             self._on_handshake_message_received(record)
 
     def build_application_message(self, payload):
+        """
+        Builds an encrypted message.
+
+        :param payload: The payload of the message
+        :return: Encrypted message
+        """
         nonce = compute_new_nonce(self.server_application_iv, self.application_messages_sent)
         self.application_messages_sent += 1
 
